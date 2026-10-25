@@ -2,7 +2,7 @@
 <html lang="uk">
 <head>
     {% load static %}<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Моя бібліотека</title><link rel="stylesheet" href="{% static 'css/jopa.css' %}?v=12">
+    <title>Моя бібліотека</title><link rel="stylesheet" href="{% static 'css/jopa.css' %}?v=14">
 </head>
 <body>
 <header class="esports-topbar"><nav class="topbar-nav"><a href="{% url 'home' %}">Каталог</a><a class="nav-current" href="{% url 'library' %}">Моя бібліотека</a><form method="post" action="{% url 'logout' %}" class="nav-logout">{% csrf_token %}<button type="submit">Вийти</button></form></nav></header>
