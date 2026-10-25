@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    {% load static %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ game.name }}</title>
+    <link rel="stylesheet" href="{% static 'css/jopa.css' %}?v=8">
+</head>
+<body>
+<nav class="topbar">
+    <a class="topbar-link" href="{% url 'home' %}">Колекція</a>
+</nav>
+<main class="catalog game-page">
+    <a class="back-link" href="{% url 'home' %}">← До всіх ігор</a>
+    <article class="game-card">
+        {% if game.photo %}
+            <img class="game-cover" src="{{ game.photo.url }}" alt="Обкладинка гри {{ game.name }}">
+        {% else %}
+            <div class="game-cover game-cover-placeholder" aria-hidden="true">🎮</div>
+        {% endif %}
+        <div class="game-content">
+            <div class="game-heading"><h1>{{ game.name }}</h1><span class="game-developer">{{ game.developer }}</span></div>
+            <p class="game-description">{{ game.description }}</p>
+            <dl class="game-details">
+                <div><dt>Розробник</dt><dd>{{ game.developer }}</dd></div>
+                <div><dt>Дата виходу</dt><dd>{{ game.release_date|date:"d.m.Y" }}</dd></div>
+                {% if game.price is not None %}<div><dt>Ціна</dt><dd>{{ game.price|floatformat:2 }} ₴</dd></div>{% endif %}
+                {% if game.link %}<div><dt>Посилання</dt><dd><a href="{{ game.link }}" target="_blank" rel="noopener noreferrer">Відкрити</a></dd></div>{% endif %}
+            </dl>
+        </div>
+    </article>
+</main>
+</body>
+</html>

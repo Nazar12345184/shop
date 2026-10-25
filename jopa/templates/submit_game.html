@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    {% load static %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Запропонувати гру</title>
+    <link rel="stylesheet" href="{% static 'css/jopa.css' %}?v=9">
+</head>
+<body>
+<nav class="topbar">
+    <a class="topbar-link" href="{% url 'home' %}">← До колекції</a>
+    <span class="topbar-note">Запропонуй гру для каталогу</span>
+</nav>
+<main class="catalog submit-page">
+    <header class="submit-heading">
+        <p class="eyebrow">НОВА ЗАЯВКА</p>
+        <h1>Запропонувати гру</h1>
+        <p class="subtitle">Спершу я перегляну заявку. Гра з’явиться в каталозі тільки після схвалення.</p>
+    </header>
+
+    {% if messages %}
+        {% for message in messages %}<div class="notice notice-{{ message.tags }}">{{ message }}</div>{% endfor %}
+    {% endif %}
+
+    <form class="submission-form" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {% if form.non_field_errors %}<div class="form-errors">{{ form.non_field_errors }}</div>{% endif %}
+        <div class="form-grid">
+            {% for field in form %}
+                <div class="form-field {% if field.name == 'description' or field.name == 'photo' %}form-field-wide{% endif %}">
+                    <label for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %}<span class="required-mark">*</span>{% endif %}</label>
+                    {{ field }}
+                    {% if field.help_text %}<small>{{ field.help_text }}</small>{% endif %}
+                    {% for error in field.errors %}<span class="field-error">{{ error }}</span>{% endfor %}
+                </div>
+            {% endfor %}
+        </div>
+        <button class="submit-button" type="submit">Надіслати на перевірку <span aria-hidden="true">→</span></button>
+        <p class="form-footnote">Поля з позначкою * обов’язкові. Заявки надходять власнику каталогу на перевірку.</p>
+    </form>
+</main>
+</body>
+</html>

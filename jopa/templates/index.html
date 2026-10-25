@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    {% load static %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ігрова колекція</title>
+    <link rel="stylesheet" href="{% static 'css/jopa.css' %}?v=8">
+</head>
+<body>
+<nav class="topbar">
+    <a class="topbar-link" href="{% url 'home' %}">Колекція</a>
+    <span class="topbar-note">Твоя бібліотека ігор</span>
+    <a class="submit-link" href="{% url 'submit_game' %}">Запропонувати гру <span aria-hidden="true">＋</span></a>
+</nav>
+<main class="catalog">
+    <header class="catalog-header hero-panel">
+        <div>
+            <p class="eyebrow">ТВОЯ БІБЛІОТЕКА</p>
+            <h1>Ігри</h1>
+            <p class="subtitle">Усі улюблені пригоди — в одному місці.</p>
+        </div>
+        <span class="collection-count">{{ games|length }} {% if games|length == 1 %}проект{% else %}проекти{% endif %}</span>
+    </header>
+
+    <section class="game-grid" aria-label="Список ігор">
+        {% for game in games %}
+        <article class="game-card">
+            {% if game.photo %}
+                <img class="game-cover" src="{{ game.photo.url }}" alt="Обкладинка гри {{ game.name }}">
+            {% else %}
+                <div class="game-cover game-cover-placeholder" aria-hidden="true">🎮</div>
+            {% endif %}
+            <div class="game-content">
+                <div class="game-heading"><h2>{{ game.name }}</h2><span class="game-developer">{{ game.developer }}</span></div>
+                <p class="game-description">{{ game.description }}</p>
+                <div class="game-bottom">
+                    <a class="game-card-link" href="{% url 'game_detail' game.pk %}">Детальніше <span aria-hidden="true">→</span></a>
+                    {% if game.price is not None %}<span class="price-tag">{{ game.price|floatformat:2 }} ₴</span>{% endif %}
+                </div>
+            </div>
+        </article>
+        {% empty %}
+            <p class="empty-state">У колекції поки немає ігор. Додай першу через панель адміністратора.</p>
+        {% endfor %}
+    </section>
+</main>
+</body>
+</html>
