@@ -4,7 +4,7 @@ from pathlib import Path
 from django.conf import settings
 from django.contrib import admin
 from django.contrib import messages
-from .models import GameSubmission, games
+from .models import GamePurchase, GameSubmission, games
 
 
 def write_game_json(game):
@@ -75,3 +75,17 @@ class GameSubmissionAdmin(admin.ModelAdmin):
         self.message_user(request, f'Відхилено заявок: {rejected}.', messages.INFO)
 
 # Register your models here.
+
+
+@admin.register(GamePurchase)
+class GamePurchaseAdmin(admin.ModelAdmin):
+    list_display = ('user', 'game', 'amount', 'status', 'created_at', 'paid_at')
+    list_filter = ('status',)
+    search_fields = ('user__username', 'game__name', 'order_reference')
+    readonly_fields = ('user', 'game', 'order_reference', 'amount', 'status', 'created_at', 'paid_at')
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False

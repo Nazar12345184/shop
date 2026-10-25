@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 
 from pathlib import Path
 import os
+from urllib.parse import urlparse
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -30,16 +31,27 @@ if ENV_FILE.exists():
             os.environ[key] = value
 
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
+# Use explicit environment settings for deployment while keeping local development easy.
+DEBUG = os.environ.get('DJANGO_DEBUG', 'true').strip().lower() in {'1', 'true', 'yes', 'on'}
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', '')
+if not SECRET_KEY:
+    if not DEBUG:
+        from django.core.exceptions import ImproperlyConfigured
+        raise ImproperlyConfigured('Set DJANGO_SECRET_KEY in .env when DJANGO_DEBUG is false.')
+    SECRET_KEY = 'django-insecure-local-development-key-only'
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-56x^jr@$ef*q557+rxm5mths6$ylzhe$g65ws-e9*2zk178$7&'
-
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-
-ALLOWED_HOSTS = []
+SITE_URL = os.environ.get('SITE_URL', '').rstrip('/')
+site_host = urlparse(SITE_URL).hostname
+allowed_hosts = os.environ.get('DJANGO_ALLOWED_HOSTS', '').strip()
+ALLOWED_HOSTS = [host.strip() for host in allowed_hosts.split(',') if host.strip()] if allowed_hosts else ([site_host] if site_host else ['localhost', '127.0.0.1'])
+csrf_origins = os.environ.get('DJANGO_CSRF_TRUSTED_ORIGINS', '').strip()
+CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in csrf_origins.split(',') if origin.strip()] if csrf_origins else ([SITE_URL] if SITE_URL.startswith('https://') else [])
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+SECURE_SSL_REDIRECT = not DEBUG
+SESSION_COOKIE_SECURE = not DEBUG
+CSRF_COOKIE_SECURE = not DEBUG
+SECURE_HSTS_SECONDS = 31536000 if not DEBUG else 0
+SECURE_HSTS_INCLUDE_SUBDOMAINS = False
 
 
 # Application definition
@@ -119,7 +131,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/6.0/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'uk'
 
 TIME_ZONE = 'UTC'
 
@@ -137,3 +149,9 @@ MEDIA_ROOT = BASE_DIR / 'jopa'
 
 TELEGRAM_BOT_TOKEN = os.environ.get('TELEGRAM_BOT_TOKEN', '')
 TELEGRAM_CHAT_ID = os.environ.get('TELEGRAM_CHAT_ID', '')
+
+WAYFORPAY_MERCHANT_ACCOUNT = os.environ.get('WAYFORPAY_MERCHANT_ACCOUNT', '')
+WAYFORPAY_SECRET_KEY = os.environ.get('WAYFORPAY_SECRET_KEY', '')
+WAYFORPAY_MERCHANT_DOMAIN = os.environ.get('WAYFORPAY_MERCHANT_DOMAIN', '')
+LOGIN_REDIRECT_URL = 'home'
+LOGOUT_REDIRECT_URL = 'home'

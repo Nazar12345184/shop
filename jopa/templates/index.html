@@ -4,46 +4,63 @@
     {% load static %}
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ігрова колекція</title>
-    <link rel="stylesheet" href="{% static 'css/jopa.css' %}?v=8">
+    <title>Колекція ігор</title>
+    <link rel="stylesheet" href="{% static 'css/jopa.css' %}?v=12">
 </head>
 <body>
-<nav class="topbar">
-    <a class="topbar-link" href="{% url 'home' %}">Колекція</a>
-    <span class="topbar-note">Твоя бібліотека ігор</span>
-    <a class="submit-link" href="{% url 'submit_game' %}">Запропонувати гру <span aria-hidden="true">＋</span></a>
-</nav>
-<main class="catalog">
-    <header class="catalog-header hero-panel">
-        <div>
-            <p class="eyebrow">ТВОЯ БІБЛІОТЕКА</p>
-            <h1>Ігри</h1>
-            <p class="subtitle">Усі улюблені пригоди — в одному місці.</p>
-        </div>
-        <span class="collection-count">{{ games|length }} {% if games|length == 1 %}проект{% else %}проекти{% endif %}</span>
-    </header>
+<header class="esports-topbar">
+    <nav class="topbar-nav" aria-label="Головна навігація">
+        <a class="nav-current" href="{% url 'home' %}">Ігри</a>
+        <a href="{% url 'library' %}">Моя бібліотека</a>
+        <a href="#about">Про каталог</a>
+        <a href="{% url 'submit_game' %}">Запропонувати гру</a>
+        {% if request.user.is_authenticated %}<form method="post" action="{% url 'logout' %}" class="nav-logout">{% csrf_token %}<button type="submit">Вийти</button></form>{% else %}<a href="{% url 'login' %}">Увійти</a><a href="{% url 'register' %}">Створити акаунт</a>{% endif %}
+    </nav>
+</header>
 
-    <section class="game-grid" aria-label="Список ігор">
-        {% for game in games %}
-        <article class="game-card">
-            {% if game.photo %}
-                <img class="game-cover" src="{{ game.photo.url }}" alt="Обкладинка гри {{ game.name }}">
-            {% else %}
-                <div class="game-cover game-cover-placeholder" aria-hidden="true">🎮</div>
-            {% endif %}
-            <div class="game-content">
-                <div class="game-heading"><h2>{{ game.name }}</h2><span class="game-developer">{{ game.developer }}</span></div>
-                <p class="game-description">{{ game.description }}</p>
-                <div class="game-bottom">
-                    <a class="game-card-link" href="{% url 'game_detail' game.pk %}">Детальніше <span aria-hidden="true">→</span></a>
-                    {% if game.price is not None %}<span class="price-tag">{{ game.price|floatformat:2 }} ₴</span>{% endif %}
+<div class="dashboard-layout">
+    <aside class="left-rail">
+        <section class="side-panel">
+            <p class="side-kicker">КОЛЕКЦІЯ</p>
+            <a class="side-link side-link-active" href="{% url 'home' %}"><span>▦</span> Усі ігри <b>{{ games|length }}</b></a>
+            <a class="side-link" href="{% url 'submit_game' %}"><span>＋</span> Додати гру</a>
+        </section>
+    </aside>
+
+    <main class="dashboard-main">
+        {% if messages %}{% for message in messages %}<div class="notice">{{ message }}</div>{% endfor %}{% endif %}
+        <div class="section-heading"><div><p class="side-kicker">КАТАЛОГ</p><h1>Ігри</h1></div><span class="collection-count">{{ games|length }} проєкт(и)</span></div>
+        <section class="catalog-cards" aria-label="Список ігор">
+            {% for game in games %}
+            <article class="esports-game-card" data-priced="{% if game.price is not None %}yes{% else %}no{% endif %}">
+                <div class="esports-game-head">
+                    {% if game.photo %}<img class="esports-game-cover" src="{{ game.photo.url }}" alt="Обкладинка гри {{ game.name }}">{% else %}<div class="esports-game-cover cover-placeholder">N</div>{% endif %}
+                    <div class="team-info"><span class="badge">ГРА</span><h2>{{ game.name }}</h2></div>
                 </div>
-            </div>
-        </article>
-        {% empty %}
-            <p class="empty-state">У колекції поки немає ігор. Додай першу через панель адміністратора.</p>
-        {% endfor %}
-    </section>
-</main>
+                <p class="esports-description">{{ game.description|default:"Опис поки не додано." }}</p>
+                <div class="game-stats">
+                    <div class="stat-row"><span>Дата виходу</span><strong>{{ game.release_date|date:"d.m.Y" }}</strong></div>
+                    <div class="stat-row"><span>Ціна</span><strong>{% if game.price is not None %}{{ game.price|floatformat:2 }} ₴{% else %}Без ціни{% endif %}</strong></div>
+                </div>
+                {% if not request.user.is_authenticated %}<a class="game-action" href="{% url 'login' %}">Увійдіть, щоб придбати <span>→</span></a>{% elif game.pk in owned_ids %}<a class="game-action" href="{% url 'library' %}">У бібліотеці <span>✓</span></a>{% elif game.price is not None and game.price > 0 %}<form method="post" action="{% url 'buy_game' game.pk %}" class="purchase-form">{% csrf_token %}<button class="game-action" type="submit">Купити за {{ game.price|floatformat:2 }} ₴ <span>→</span></button></form>{% else %}<form method="post" action="{% url 'add_free_game' game.pk %}" class="purchase-form">{% csrf_token %}<button class="game-action" type="submit">Додати до бібліотеки <span>＋</span></button></form>{% endif %}
+                <a class="game-details-link" href="{% url 'game_detail' game.pk %}">Детальніше про гру</a>
+            </article>
+            {% empty %}
+            <div class="empty-state">У каталозі поки немає ігор.</div>
+            {% endfor %}
+        </section>
+    </main>
+
+    <aside class="right-rail">
+        <section class="side-panel">
+            <h2 class="rail-title">Останні ігри</h2>
+            {% for game in games|slice:":4" %}
+            <a class="activity-item" href="{% url 'game_detail' game.pk %}"><span class="activity-label">ГРА</span><span class="activity-copy"><strong>{{ game.name }}</strong><small>{{ game.release_date|date:"d.m.Y" }}</small></span><span class="activity-price">{% if game.price is not None %}{{ game.price|floatformat:0 }} ₴{% else %}—{% endif %}</span></a>
+            {% empty %}<p class="side-muted">Тут з’являться нові ігри.</p>{% endfor %}
+        </section>
+        <section class="side-panel" id="about"><h2 class="rail-title">Про каталог</h2><p class="side-muted">Тут зібрані ігри та проєкти. Запропонуйте власну гру — заявку перевірять перед публікацією.</p><a class="rail-action" href="{% url 'submit_game' %}">Запропонувати гру <span>→</span></a></section>
+    </aside>
+</div>
+
 </body>
 </html>

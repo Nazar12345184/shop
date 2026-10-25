@@ -1,0 +1,6 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>{% load static %}<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Створити акаунт</title><link rel="stylesheet" href="{% static 'css/jopa.css' %}?v=12"></head>
+<body><header class="esports-topbar"><nav class="topbar-nav"><a href="{% url 'home' %}">Каталог</a><a class="nav-current" href="{% url 'register' %}">Створити акаунт</a><a href="{% url 'login' %}">Увійти</a></nav></header>
+<main class="catalog submit-page"><header class="submit-heading"><p class="eyebrow">БІБЛІОТЕКА ІГОР</p><h1>Створити акаунт</h1><p class="subtitle">Акаунт потрібен, щоб зберігати придбані ігри.</p></header>
+<form method="post" class="submission-form account-form">{% csrf_token %}{{ form.as_p }}<button class="submit-button" type="submit">Зареєструватися <span>→</span></button></form></main></body></html>

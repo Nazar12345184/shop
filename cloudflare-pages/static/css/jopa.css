@@ -98,3 +98,141 @@ body {
     .game-description { font-size: 13px; }
     .game-details div { padding: 8px; font-size: 12px; }
 }
+
+/* Muted, square-edged theme */
+:root {
+    --bg: #141414;
+    --surface: #202020;
+    --surface-light: #292929;
+    --line: #3a3a3a;
+    --text: #e1e1e1;
+    --muted: #a2a2a2;
+    --accent: #b7b7b7;
+}
+body { background: #141414; color: var(--text); }
+.topbar { background: #171717; border-color: #303030; }
+.topbar-link:hover, .submit-link:hover { color: #fff; }
+.submit-link { border-color: #444; color: #d0d0d0; }
+.submit-link:hover { border-color: #777; background: #242424; }
+.hero-panel { border-color: #333; border-left-color: #777; background: linear-gradient(110deg, #232323, #1b1b1b 68%, #202020); box-shadow: none; }
+.hero-panel::after { background: #777; }
+.catalog-header h1 { text-shadow: none; }
+.subtitle { color: #b8b8b8; }
+.collection-count { border-color: #3b3b3b; background: #1a1a1a; color: #c6c6c6; }
+.game-card { border-color: #353535; background: #202020; box-shadow: none; }
+.game-card:hover { transform: none; border-color: #666; box-shadow: none; }
+.game-cover { background: #181818; }
+.game-cover-placeholder { color: #aaa; }
+.game-developer { color: #aaa; }
+.game-description { color: #c0c0c0; }
+.game-card-link { border-color: #555; border-radius: 0; background: #333; color: #eee; }
+.game-card-link:hover { background: #444; }
+.price-tag { border-radius: 0; background: #2a2a2a; color: #d0d0d0; }
+.game-details { border-color: #444; background: #202020; }
+.game-details div + div { border-color: #3a3a3a; }
+.empty-state { border-color: #555; }
+.submission-form { border-color: #383838; border-radius: 0; background: #202020; box-shadow: none; }
+.form-field label { color: #ddd; }
+.form-field input, .form-field textarea { border-color: #484848; border-radius: 0; background: #171717; }
+.form-field input:focus, .form-field textarea:focus { border-color: #999; box-shadow: none; }
+.field-error, .form-errors { color: #d0a5a5; }
+.submit-button { border-color: #555; border-radius: 0; background: #333; color: #eee; }
+.submit-button:hover { background: #444; }
+.submit-button span, .submit-link span { color: #bbb; }
+.notice, .notice-warning { border-color: #4a4a4a; border-radius: 0; background: #232323; color: #ddd; }
+.notice-warning { border-color: #5a5142; background: #29251f; color: #d5c8ac; }
+.submit-link, .hero-panel, .collection-count, .game-card, .game-details, .empty-state { border-radius: 0; }
+
+/* Esports catalog dashboard */
+body { background: #111315; }
+.esports-topbar { display:flex; align-items:center; gap:50px; min-height:58px; padding:0 max(24px, calc((100vw - 1450px) / 2)); border-bottom:1px solid #2b2e32; background:#181a1d; }
+.brand { display:flex; align-items:center; gap:10px; color:#d7d9dc; text-decoration:none; font-size:14px; font-weight:800; letter-spacing:.06em; white-space:nowrap; }
+.brand small { display:block; margin-top:2px; color:#777e85; font-size:8px; letter-spacing:.18em; }
+.brand-mark,.profile-dot { display:grid; place-items:center; width:30px; height:30px; border:1px solid #535960; background:#24272b; color:#c3c7cb; }
+.topbar-nav { display:flex; align-self:stretch; gap:26px; }
+.topbar-nav a { display:flex; align-items:center; padding:0 4px; border-bottom:2px solid transparent; color:#858c93; font-size:13px; font-weight:650; text-decoration:none; }
+.topbar-nav a:hover,.topbar-nav a.nav-current { border-color:#8f9499; color:#e0e2e4; }
+.profile-dot { margin-left:auto; border-radius:50%; color:#adb2b7; }
+.dashboard-layout { display:grid; grid-template-columns:220px minmax(0,1fr) 285px; gap:18px; width:min(1450px,calc(100% - 40px)); min-height:calc(100vh - 58px); margin:0 auto; }
+.left-rail,.right-rail { padding:18px 0; }
+.dashboard-main { min-width:0; padding:18px 0 42px; }
+.side-panel { margin-bottom:14px; border:1px solid #30343a; background:#1b1e22; }
+.left-rail .side-panel { padding:14px 12px; }
+.side-kicker { margin:0; color:#858b91; font-size:10px; font-weight:800; letter-spacing:.14em; }
+.side-link { display:flex; align-items:center; gap:10px; min-height:38px; margin-top:5px; padding:0 9px; color:#aeb3b8; font-size:12px; font-weight:650; text-decoration:none; }
+.side-link span { color:#858b91; font-size:16px; }
+.side-link b { margin-left:auto; color:#8f969d; font-size:11px; }
+.side-link:hover,.side-link-active { background:#292d32; color:#e1e3e5; }
+.side-note p:last-child { margin:12px 2px 2px; color:#9da3a9; font-size:12px; line-height:1.6; }
+.promo-banner { display:flex; align-items:center; justify-content:space-between; min-height:112px; overflow:hidden; padding:17px 24px; border:1px solid #30343a; background:linear-gradient(100deg,#202328,#17191c 68%,#202226); }
+.promo-banner strong,.promo-banner span { display:block; }
+.promo-banner strong { margin-top:8px; color:#d8dade; font-size:22px; letter-spacing:.01em; }
+.promo-banner span { margin-top:4px; color:#92989e; font-size:12px; }
+.promo-mark { color:#7b8188; font-size:62px; font-weight:900; line-height:1; opacity:.65; }
+.promo-mark span { display:inline; color:#b3b6ba; }
+.section-heading { display:flex; align-items:end; justify-content:space-between; margin:20px 0 14px; }
+.section-heading h1 { margin:4px 0 0; color:#e0e2e4; font-size:30px; letter-spacing:-.03em; }
+.collection-count { padding:6px 9px; border:1px solid #383d43; background:#202328; color:#aeb3b8; font-size:11px; }
+.filter-tabs { display:flex; gap:6px; margin-bottom:14px; border-bottom:1px solid #30343a; }
+.filter-tab { min-height:34px; padding:0 13px; border:1px solid #343940; border-bottom:0; background:#202328; color:#9299a0; font:inherit; font-size:11px; font-weight:750; cursor:pointer; }
+.filter-tab:hover,.filter-tab.active { border-color:#626970; background:#2b3036; color:#e1e3e5; }
+.catalog-cards { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
+.esports-game-card { display:flex; flex-direction:column; min-width:0; padding:14px; border:1px solid #34383e; background:#1c1f23; }
+.esports-game-card[hidden] { display:none; }
+.esports-game-head { display:flex; align-items:center; gap:13px; min-height:68px; }
+.esports-game-cover { display:block; flex:0 0 64px; width:64px; height:64px; object-fit:cover; border:1px solid #363b41; background:#141619; }
+.cover-placeholder { display:grid; place-items:center; color:#92979d; font-size:28px; }
+.team-info { min-width:0; }
+.badge { display:inline-block; padding:4px 8px; border:1px solid #3b4147; background:#252a30; color:#aeb4ba; font-size:9px; font-weight:800; letter-spacing:.06em; }
+.team-info h2 { overflow:hidden; margin:7px 0 2px; color:#e1e3e5; font-size:17px; text-overflow:ellipsis; white-space:nowrap; }
+.team-info .game-developer { margin-top:0; color:#969da4; font-size:11px; }
+.esports-description { min-height:38px; margin:14px 0 10px; color:#b1b6bb; font-size:12px; line-height:1.55; }
+.game-stats { border:1px solid #383d43; background:#22262b; }
+.stat-row { display:flex; justify-content:space-between; gap:10px; padding:9px 10px; color:#858c93; font-size:10px; }
+.stat-row + .stat-row { border-top:1px solid #363b40; }
+.stat-row strong { overflow:hidden; color:#d0d3d6; font-size:10px; text-overflow:ellipsis; white-space:nowrap; }
+.game-action,.rail-action { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:10px; padding:9px 10px; border:1px solid #454b51; background:#292d32; color:#d5d8db; font-size:11px; font-weight:750; text-decoration:none; }
+.game-action:hover,.rail-action:hover { border-color:#70777e; background:#30353a; }
+.game-action span,.rail-action span { color:#aeb3b8; font-size:15px; }
+.right-rail .side-panel { padding:0; }
+.rail-title { margin:0; padding:12px 13px; border-bottom:1px solid #363a40; color:#d7dade; font-size:14px; }
+.activity-item { display:flex; align-items:center; gap:9px; padding:12px 10px; color:inherit; text-decoration:none; }
+.activity-item + .activity-item { border-top:1px solid #35393e; }
+.activity-item:hover { background:#24282d; }
+.activity-label { padding:3px 5px; border:1px solid #42474d; color:#a6abb0; font-size:8px; font-weight:800; }
+.activity-copy { display:flex; flex:1; flex-direction:column; gap:4px; min-width:0; }
+.activity-copy strong { overflow:hidden; color:#cfd2d5; font-size:11px; text-overflow:ellipsis; white-space:nowrap; }
+.activity-copy small,.activity-price,.side-muted { color:#92989e; font-size:10px; }
+.activity-price { color:#c1c4c7; white-space:nowrap; }
+.side-muted { margin:0; padding:12px 13px; line-height:1.6; }
+.rail-action { margin:0 10px 10px; }
+.static-details { margin-top:8px; border:1px solid #363b40; background:#202328; color:#c1c5c9; font-size:11px; }
+.static-details summary { padding:8px 10px; cursor:pointer; }
+.static-details p { margin:0; padding:0 10px 10px; color:#aeb3b8; line-height:1.5; }
+.library-page { width:min(980px,calc(100% - 32px)); margin:30px auto; }
+.library-page .section-heading h1 { font-size:30px; }
+.library-items { display:grid; gap:10px; }
+.library-item { display:flex; align-items:center; gap:14px; min-height:86px; padding:12px; border:1px solid #34383e; background:#1c1f23; }
+.library-cover { width:60px; height:60px; object-fit:cover; border:1px solid #383d43; }
+.library-game-info { display:grid; flex:1; gap:5px; min-width:0; }
+.library-game-info strong { color:#e0e2e4; font-size:14px; }
+.library-game-info span { overflow:hidden; color:#9da3a9; font-size:11px; text-overflow:ellipsis; white-space:nowrap; }
+.library-owned { padding:6px 8px; border:1px solid #454b51; color:#bcc1c5; font-size:10px; }
+.library-empty { padding:22px; border:1px solid #34383e; background:#1c1f23; color:#9da3a9; font-size:13px; }
+.library-play { margin:0; white-space:nowrap; }
+.purchase-form { width:100%; margin-top:10px; }
+.purchase-form .game-action { width:100%; justify-content:space-between; cursor:pointer; font-family:inherit; }
+.game-details-link { display:inline-block; margin-top:10px; color:#9ea4aa; font-size:10px; text-decoration:underline; }
+.account-form p { display:flex; flex-direction:column; gap:6px; margin:0 0 14px; color:#bfc4c8; font-size:12px; }
+.account-form input { width:100%; padding:10px; border:1px solid #484848; border-radius:0; background:#171717; color:#e1e1e1; }
+.account-form .helptext { color:#90969b; font-size:10px; }
+.account-form ul { color:#b49b9b; font-size:11px; }
+.nav-logout { display:flex; align-items:center; }
+.nav-logout button { padding:0; border:0; background:none; color:#858c93; font:inherit; font-size:13px; font-weight:650; cursor:pointer; }
+.nav-logout button:hover { color:#e0e2e4; }
+.notice { margin-bottom:12px; padding:10px 12px; border:1px solid #464b51; background:#24282d; color:#d1d4d7; font-size:12px; }
+.account-form label { color:#dce3e5; font-size:13px; font-weight:650; }
+@media(max-width:540px) { .library-item { flex-wrap:wrap; } .library-play { width:100%; } }
+@media(max-width:1120px) { .dashboard-layout { grid-template-columns:190px minmax(0,1fr); } .right-rail { display:grid; grid-column:2; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; padding-top:0; } .right-rail .side-panel { align-self:start; } }
+@media(max-width:760px) { .esports-topbar { gap:18px; padding:0 14px; } .topbar-nav { gap:12px; } .topbar-nav a { font-size:11px; } .topbar-nav a:nth-child(2) { display:none; } .dashboard-layout { display:block; width:calc(100% - 24px); } .left-rail { padding-bottom:0; } .left-rail .side-panel { display:flex; align-items:center; gap:8px; padding:7px; margin-bottom:10px; } .left-rail .side-kicker,.side-note { display:none; } .side-link { margin:0; } .dashboard-main { padding-top:4px; } .right-rail { display:none; } }
+@media(max-width:540px) { .topbar-nav a:nth-child(3) { display:none; } .brand { font-size:12px; } .profile-dot { width:27px;height:27px; } .promo-banner { min-height:90px; padding:14px; } .promo-mark { font-size:48px; } .catalog-cards { grid-template-columns:1fr; } .section-heading h1 { font-size:26px; } .filter-tabs { gap:3px; } .filter-tab { flex:1; padding:0 7px; font-size:10px; } }

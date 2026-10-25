@@ -1,4 +1,5 @@
 from django.db import models
+from django.conf import settings
 
 
 class games(models.Model):
@@ -41,3 +42,23 @@ class GameSubmission(models.Model):
         return f'{self.name} — {self.get_status_display()}'
 
 # Create your models here.
+
+
+class GamePurchase(models.Model):
+    class Status(models.TextChoices):
+        PENDING = 'pending', 'Очікує оплати'
+        PAID = 'paid', 'Оплачено'
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='game_purchases')
+    game = models.ForeignKey(games, on_delete=models.PROTECT, related_name='purchases')
+    order_reference = models.CharField(max_length=64, unique=True)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    status = models.CharField(max_length=10, choices=Status.choices, default=Status.PENDING)
+    created_at = models.DateTimeField(auto_now_add=True)
+    paid_at = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        ordering = ('-paid_at', '-created_at')
+
+    def __str__(self):
+        return f'{self.user} — {self.game} ({self.status})'

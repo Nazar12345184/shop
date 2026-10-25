@@ -1,23 +1,177 @@
 import json
 import logging
+import hashlib
+import hmac
+import time
+import uuid
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
 from django.conf import settings
+from django.contrib.auth import login
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.forms import UserCreationForm
 from django.contrib import messages
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.utils import timezone
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
 
 from .forms import GameSubmissionForm
-from .models import GameSubmission, games
+from .models import GamePurchase, GameSubmission, games
 
 logger = logging.getLogger(__name__)
 
 
 def home(request):
     games_list = games.objects.all()
-    return render(request, 'index.html', {'games': games_list})
+    owned_ids = set()
+    if request.user.is_authenticated:
+        owned_ids = set(GamePurchase.objects.filter(user=request.user, status=GamePurchase.Status.PAID).values_list('game_id', flat=True))
+    return render(request, 'index.html', {'games': games_list, 'owned_ids': owned_ids})
+
+
+def _wayforpay_signature(fields):
+    message = ';'.join(str(value) for value in fields)
+    return hmac.new(settings.WAYFORPAY_SECRET_KEY.encode(), message.encode('utf-8'), hashlib.md5).hexdigest()
+
+
+@login_required
+@require_POST
+def buy_game(request, pk):
+    game = get_object_or_404(games, pk=pk)
+    if game.price is None or game.price <= 0:
+        messages.error(request, 'Ця гра безкоштовна — додайте її до бібліотеки.')
+        return redirect('home')
+    if GamePurchase.objects.filter(user=request.user, game=game, status=GamePurchase.Status.PAID).exists():
+        messages.info(request, 'Ця гра вже є у вашій бібліотеці.')
+        return redirect('library')
+    required = (settings.SITE_URL, settings.WAYFORPAY_MERCHANT_ACCOUNT, settings.WAYFORPAY_SECRET_KEY, settings.WAYFORPAY_MERCHANT_DOMAIN)
+    if not all(required):
+        messages.error(request, 'Оплата ще не налаштована. Потрібні облікові дані WayForPay та публічна адреса сайту в .env.')
+        return redirect('home')
+
+    order = GamePurchase.objects.create(
+        user=request.user,
+        game=game,
+        amount=game.price,
+        order_reference=f'game-{game.pk}-{uuid.uuid4().hex}',
+    )
+    order_date = int(time.time())
+    product_names = [game.name]
+    product_counts = [1]
+    product_prices = [f'{order.amount:.2f}']
+    signature_fields = [settings.WAYFORPAY_MERCHANT_ACCOUNT, settings.WAYFORPAY_MERCHANT_DOMAIN,
+                        order.order_reference, order_date, f'{order.amount:.2f}', 'UAH',
+                        *product_names, *product_counts, *product_prices]
+    payload = {
+        'transactionType': 'CREATE_INVOICE',
+        'merchantAccount': settings.WAYFORPAY_MERCHANT_ACCOUNT,
+        'merchantAuthType': 'SimpleSignature',
+        'merchantDomainName': settings.WAYFORPAY_MERCHANT_DOMAIN,
+        'merchantSignature': _wayforpay_signature(signature_fields),
+        'apiVersion': 1,
+        'language': 'UA',
+        'serviceUrl': f'{settings.SITE_URL}{reverse("wayforpay_callback")}',
+        'orderReference': order.order_reference,
+        'orderDate': order_date,
+        'amount': f'{order.amount:.2f}',
+        'currency': 'UAH',
+        'productName': product_names,
+        'productCount': product_counts,
+        'productPrice': product_prices,
+        'clientEmail': request.user.email or None,
+    }
+    payload = {key: value for key, value in payload.items() if value is not None}
+    api_request = Request('https://api.wayforpay.com/api', data=json.dumps(payload).encode('utf-8'), headers={'Content-Type': 'application/json'})
+    try:
+        with urlopen(api_request, timeout=20) as response:
+            result = json.loads(response.read().decode('utf-8'))
+        invoice_url = result.get('invoiceUrl')
+        if not invoice_url:
+            raise RuntimeError(result.get('reason', 'WayForPay не повернув адресу оплати.'))
+        return redirect(invoice_url)
+    except (HTTPError, URLError, TimeoutError, ValueError, RuntimeError) as exc:
+        logger.exception('Could not create WayForPay invoice for order %s.', order.order_reference)
+        messages.error(request, f'Не вдалося створити рахунок WayForPay: {exc}')
+        return redirect('home')
+
+
+@csrf_exempt
+@require_POST
+def wayforpay_callback(request):
+    try:
+        data = json.loads(request.body.decode('utf-8'))
+    except (UnicodeDecodeError, json.JSONDecodeError):
+        return HttpResponse(status=400)
+    order_reference = str(data.get('orderReference', ''))
+    order = GamePurchase.objects.filter(order_reference=order_reference).first()
+    if order is None:
+        return HttpResponse(status=404)
+    fields = [data.get('merchantAccount', ''), data.get('orderReference', ''), data.get('amount', ''),
+              data.get('currency', ''), data.get('authCode', ''), data.get('cardPan', ''),
+              data.get('transactionStatus', ''), data.get('reasonCode', '')]
+    expected = _wayforpay_signature(fields)
+    if not hmac.compare_digest(str(data.get('merchantSignature', '')), expected):
+        return HttpResponse(status=400)
+    if data.get('merchantAccount') != settings.WAYFORPAY_MERCHANT_ACCOUNT:
+        return HttpResponse(status=400)
+    if data.get('transactionStatus') == 'Approved':
+        from decimal import Decimal, InvalidOperation
+        try:
+            callback_amount = Decimal(str(data.get('amount')))
+        except InvalidOperation:
+            return HttpResponse(status=400)
+        if str(data.get('currency')) != 'UAH' or callback_amount != order.amount:
+            return HttpResponse(status=400)
+        if order.status != GamePurchase.Status.PAID:
+            order.status = GamePurchase.Status.PAID
+            order.paid_at = timezone.now()
+            order.save(update_fields=('status', 'paid_at'))
+    response_time = int(time.time())
+    response_fields = [order_reference, 'accept', response_time]
+    return JsonResponse({
+        'orderReference': order_reference,
+        'status': 'accept',
+        'time': response_time,
+        'signature': _wayforpay_signature(response_fields),
+    })
+
+
+@login_required
+def library(request):
+    purchases = GamePurchase.objects.filter(user=request.user, status=GamePurchase.Status.PAID).select_related('game')
+    return render(request, 'library.html', {'purchases': purchases})
+
+
+@login_required
+@require_POST
+def add_free_game(request, pk):
+    game = get_object_or_404(games, pk=pk)
+    if game.price is not None and game.price > 0:
+        messages.error(request, 'Цю гру потрібно придбати через оплату.')
+        return redirect('home')
+    GamePurchase.objects.get_or_create(
+        user=request.user,
+        game=game,
+        status=GamePurchase.Status.PAID,
+        defaults={'order_reference': f'free-{request.user.pk}-{game.pk}', 'amount': 0, 'paid_at': timezone.now()},
+    )
+    return redirect('library')
+
+
+def register(request):
+    if request.user.is_authenticated:
+        return redirect('home')
+    form = UserCreationForm(request.POST or None)
+    if request.method == 'POST' and form.is_valid():
+        user = form.save()
+        login(request, user)
+        return redirect('home')
+    return render(request, 'registration/register.html', {'form': form})
 
 
 def game_detail(request, pk):

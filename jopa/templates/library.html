@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    {% load static %}<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Моя бібліотека</title><link rel="stylesheet" href="{% static 'css/jopa.css' %}?v=12">
+</head>
+<body>
+<header class="esports-topbar"><nav class="topbar-nav"><a href="{% url 'home' %}">Каталог</a><a class="nav-current" href="{% url 'library' %}">Моя бібліотека</a><form method="post" action="{% url 'logout' %}" class="nav-logout">{% csrf_token %}<button type="submit">Вийти</button></form></nav></header>
+<main class="library-page">
+    <a class="back-link" href="{% url 'home' %}">← До каталогу</a>
+    <div class="section-heading"><div><p class="side-kicker">ВАША КОЛЕКЦІЯ</p><h1>Моя бібліотека</h1></div><span class="collection-count">{{ purchases|length }} ігор</span></div>
+    <section class="library-items">
+        {% for purchase in purchases %}
+        <article class="library-item">
+            {% if purchase.game.photo %}<img src="{{ purchase.game.photo.url }}" alt="" class="library-cover">{% endif %}
+            <div class="library-game-info"><strong>{{ purchase.game.name }}</strong><span>{{ purchase.game.description }}</span></div>
+            <span class="library-owned">У бібліотеці</span>
+            {% if purchase.game.link %}<a class="game-action library-play" href="{{ purchase.game.link }}" target="_blank" rel="noopener noreferrer">Запустити гру <span>↗</span></a>{% endif %}
+        </article>
+        {% empty %}<p class="library-empty">У бібліотеці ще немає ігор. Виберіть гру в каталозі та завершіть оплату.</p>{% endfor %}
+    </section>
+</main>
+</body>
+</html>
