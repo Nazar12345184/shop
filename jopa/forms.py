@@ -2,7 +2,7 @@ from django import forms
 from django.contrib.auth.forms import UserCreationForm
 import re
 
-from .models import GameSubmission, TelegramProfile
+from .models import CatalogType, GameSubmission, TelegramProfile
 
 
 class RegistrationForm(UserCreationForm):
@@ -36,16 +36,24 @@ class RegistrationForm(UserCreationForm):
 
 
 class GameSubmissionForm(forms.ModelForm):
+    kind = forms.ChoiceField(
+        label='Що пропонуєш?',
+        choices=CatalogType.choices,
+        help_text='Обери категорію своєї пропозиції.',
+    )
+
     class Meta:
         model = GameSubmission
         fields = (
             'submitter_name',
             'submitter_telegram',
+            'kind',
             'name',
             'description',
             'release_date',
             'developer',
             'photo',
+            'link',
             'price',
         )
         widgets = {

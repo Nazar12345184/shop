@@ -35,7 +35,7 @@
             <article class="esports-game-card" data-priced="{% if game.price is not None %}yes{% else %}no{% endif %}">
                 <div class="esports-game-head">
                     {% if game.photo %}<img class="esports-game-cover" src="{{ game.photo.url }}" alt="Обкладинка гри {{ game.name }}">{% else %}<div class="esports-game-cover cover-placeholder">N</div>{% endif %}
-                    <div class="team-info"><span class="badge">ГРА</span><h2>{{ game.name }}</h2></div>
+                    <div class="team-info"><span class="badge">{{ game.get_kind_display }}</span><h2>{{ game.name }}</h2></div>
                 </div>
                 <p class="esports-description">{{ game.description|default:"Опис поки не додано." }}</p>
                 <div class="game-stats">
@@ -55,7 +55,7 @@
         <section class="side-panel">
             <h2 class="rail-title">Останні ігри</h2>
             {% for game in games|slice:":4" %}
-            <a class="activity-item" href="{% url 'game_detail' game.pk %}"><span class="activity-label">ГРА</span><span class="activity-copy"><strong>{{ game.name }}</strong><small>{{ game.release_date|date:"d.m.Y" }}</small></span><span class="activity-price">{% if game.price is not None %}{{ game.price|floatformat:0 }} ₴{% else %}—{% endif %}</span></a>
+            <a class="activity-item" href="{% url 'game_detail' game.pk %}"><span class="activity-label">{{ game.get_kind_display }}</span><span class="activity-copy"><strong>{{ game.name }}</strong><small>{{ game.release_date|date:"d.m.Y" }}</small></span><span class="activity-price">{% if game.price is not None %}{{ game.price|floatformat:0 }} ₴{% else %}—{% endif %}</span></a>
             {% empty %}<p class="side-muted">Тут з’являться нові ігри.</p>{% endfor %}
         </section>
         <section class="side-panel" id="about"><h2 class="rail-title">Про каталог</h2><p class="side-muted">Тут зібрані ігри та проєкти. Запропонуйте власну гру — заявку перевірять перед публікацією.</p><a class="rail-action" href="{% url 'submit_game' %}">Запропонувати гру <span>→</span></a></section>

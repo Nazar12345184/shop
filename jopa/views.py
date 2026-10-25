@@ -240,7 +240,8 @@ def submit_game(request):
                 reverse('admin:jopa_gamesubmission_change', args=(submission.pk,))
             )
             notification = (
-                f'Нова заявка на гру: {submission.name}\n'
+                f'Категорія: {submission.get_kind_display()}\n'
+                f'Нова пропозиція: {submission.name}\n'
                 f'Автор: {submission.submitter_name} ({submission.submitter_telegram})\n\n'
                 f'Переглянути заявку в адмінці: {review_url}'
             )

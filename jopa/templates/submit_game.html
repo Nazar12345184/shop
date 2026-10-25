@@ -4,19 +4,19 @@
     {% load static %}
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Запропонувати гру</title>
+    <title>Запропонувати в каталог</title>
     <link rel="stylesheet" href="{% static 'css/jopa.css' %}?v=12">
 </head>
 <body>
 <nav class="topbar">
     <a class="topbar-link" href="{% url 'home' %}">← До колекції</a>
-    <span class="topbar-note">Запропонуй гру для каталогу</span>
+    <span class="topbar-note">Запропонуй гру, проєкт або послугу</span>
 </nav>
 <main class="catalog submit-page">
     <header class="submit-heading">
-        <p class="eyebrow">НОВА ЗАЯВКА</p>
-        <h1>Запропонувати гру</h1>
-        <p class="subtitle">Спершу я перегляну заявку. Гра з’явиться в каталозі тільки після схвалення.</p>
+        <p class="eyebrow">НОВА ПРОПОЗИЦІЯ</p>
+        <h1>Запропонувати в каталог</h1>
+        <p class="subtitle">Обери тип пропозиції та заповни відомі дані. Заявка з’явиться після перевірки.</p>
     </header>
 
     {% if messages %}
@@ -37,7 +37,7 @@
             {% endfor %}
         </div>
         <button class="submit-button" type="submit">Надіслати на перевірку <span aria-hidden="true">→</span></button>
-        <p class="form-footnote">Поля з позначкою * обов’язкові. Заявки надходять власнику каталогу на перевірку.</p>
+        <p class="form-footnote">Поля з позначкою * обов’язкові. Не вводь тут номер картки чи CVV: виплати налаштовуються через платіжного провайдера.</p>
     </form>
 </main>
 </body>

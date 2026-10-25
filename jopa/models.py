@@ -2,11 +2,19 @@ from django.db import models
 from django.conf import settings
 
 
+class CatalogType(models.TextChoices):
+    GAME = 'game', 'Гра'
+    PROJECT = 'project', 'Проєкт'
+    SERVICE = 'service', 'Послуга'
+    OTHER = 'other', 'Інше'
+
+
 class games(models.Model):
+    kind = models.CharField(max_length=12, choices=CatalogType.choices, default=CatalogType.GAME)
     name = models.CharField(max_length=100)
     description = models.CharField(max_length=255)
-    release_date = models.DateField()
-    developer = models.CharField(max_length=100)
+    release_date = models.DateField(blank=True, null=True)
+    developer = models.CharField(max_length=100, blank=True)
     photo = models.ImageField(upload_to='static/img/', blank=True, null=True)
     link = models.URLField(blank=True)
     price = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
@@ -23,10 +31,11 @@ class GameSubmission(models.Model):
 
     submitter_name = models.CharField('Ваше ім’я', max_length=100)
     submitter_telegram = models.CharField('Ваш Telegram нік', max_length=100, help_text='Наприклад, @username')
-    name = models.CharField('Назва гри', max_length=100)
+    kind = models.CharField('Тип пропозиції', max_length=12, choices=CatalogType.choices, default=CatalogType.GAME)
+    name = models.CharField('Назва пропозиції', max_length=100)
     description = models.CharField('Опис', max_length=255)
-    release_date = models.DateField('Дата виходу')
-    developer = models.CharField('Розробник', max_length=100)
+    release_date = models.DateField('Дата виходу або запуску', blank=True, null=True)
+    developer = models.CharField('Розробник, автор або команда', max_length=100, blank=True)
     photo = models.ImageField(upload_to='submissions/covers/', blank=True, null=True)
     link = models.URLField('Посилання на гру', blank=True)
     price = models.DecimalField('Ціна', max_digits=10, decimal_places=2, blank=True, null=True)

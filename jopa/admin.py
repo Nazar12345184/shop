@@ -12,9 +12,10 @@ def write_game_json(game):
     output_dir.mkdir(parents=True, exist_ok=True)
     payload = {
         'id': game.pk,
+        'kind': game.kind,
         'name': game.name,
         'description': game.description,
-        'release_date': game.release_date.isoformat(),
+        'release_date': game.release_date.isoformat() if game.release_date else None,
         'developer': game.developer,
         'photo': game.photo.name if game.photo else '',
         'link': game.link,
@@ -28,8 +29,9 @@ def write_game_json(game):
 
 @admin.register(games)
 class GamesAdmin(admin.ModelAdmin):
-    list_display = ('name', 'developer', 'release_date', 'price')
+    list_display = ('name', 'kind', 'developer', 'release_date', 'price')
     search_fields = ('name', 'developer')
+    list_filter = ('kind',)
     ordering = ('name',)
 
     def save_model(self, request, obj, form, change):
@@ -39,8 +41,8 @@ class GamesAdmin(admin.ModelAdmin):
 
 @admin.register(GameSubmission)
 class GameSubmissionAdmin(admin.ModelAdmin):
-    list_display = ('name', 'developer', 'submitter_name', 'submitter_telegram', 'submitted_at', 'status')
-    list_filter = ('status',)
+    list_display = ('name', 'kind', 'developer', 'submitter_name', 'submitter_telegram', 'submitted_at', 'status')
+    list_filter = ('kind', 'status')
     search_fields = ('name', 'developer', 'submitter_name', 'submitter_telegram')
     readonly_fields = ('status', 'submitted_at')
     actions = ('approve_submissions', 'reject_submissions')
@@ -54,6 +56,7 @@ class GameSubmissionAdmin(admin.ModelAdmin):
         for submission in queryset.filter(status=GameSubmission.Status.PENDING):
             game = games.objects.create(
                 name=submission.name,
+                kind=submission.kind,
                 description=submission.description,
                 release_date=submission.release_date,
                 developer=submission.developer,
