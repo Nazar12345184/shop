@@ -4,7 +4,7 @@ from pathlib import Path
 from django.conf import settings
 from django.contrib import admin
 from django.contrib import messages
-from .models import GamePurchase, GameSubmission, games
+from .models import GamePurchase, GameSubmission, TelegramProfile, games
 
 
 def write_game_json(game):
@@ -75,6 +75,12 @@ class GameSubmissionAdmin(admin.ModelAdmin):
         self.message_user(request, f'Відхилено заявок: {rejected}.', messages.INFO)
 
 # Register your models here.
+
+
+@admin.register(TelegramProfile)
+class TelegramProfileAdmin(admin.ModelAdmin):
+    list_display = ('user', 'telegram_username')
+    search_fields = ('user__username', 'telegram_username')
 
 
 @admin.register(GamePurchase)

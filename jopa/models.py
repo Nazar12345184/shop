@@ -44,6 +44,18 @@ class GameSubmission(models.Model):
 # Create your models here.
 
 
+class TelegramProfile(models.Model):
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='telegram_profile',
+    )
+    telegram_username = models.CharField(max_length=32, unique=True)
+
+    def __str__(self):
+        return f'@{self.telegram_username} ({self.user})'
+
+
 class GamePurchase(models.Model):
     class Status(models.TextChoices):
         PENDING = 'pending', 'Очікує оплати'
@@ -56,6 +68,7 @@ class GamePurchase(models.Model):
     status = models.CharField(max_length=10, choices=Status.choices, default=Status.PENDING)
     created_at = models.DateTimeField(auto_now_add=True)
     paid_at = models.DateTimeField(blank=True, null=True)
+    telegram_notified_at = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         ordering = ('-paid_at', '-created_at')

@@ -11,7 +11,6 @@ from urllib.request import Request, urlopen
 from django.conf import settings
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.forms import UserCreationForm
 from django.contrib import messages
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -20,7 +19,7 @@ from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
-from .forms import GameSubmissionForm
+from .forms import GameSubmissionForm, RegistrationForm
 from .models import GamePurchase, GameSubmission, games
 
 logger = logging.getLogger(__name__)
@@ -37,6 +36,30 @@ def home(request):
 def _wayforpay_signature(fields):
     message = ';'.join(str(value) for value in fields)
     return hmac.new(settings.WAYFORPAY_SECRET_KEY.encode(), message.encode('utf-8'), hashlib.md5).hexdigest()
+
+
+def notify_purchase_in_telegram(purchase):
+    if purchase.telegram_notified_at:
+        return
+
+    profile = getattr(purchase.user, 'telegram_profile', None)
+    telegram_username = f'@{profile.telegram_username}' if profile else 'не вказаний'
+    buyer_name = purchase.user.get_full_name().strip() or purchase.user.username
+    notification = (
+        '✅ Нова покупка гри\n'
+        f'Гра: {purchase.game.name}\n'
+        f'Покупець: {buyer_name} (логін: {purchase.user.username})\n'
+        f'Telegram: {telegram_username}\n'
+        f'Сума: {purchase.amount:.2f} грн'
+    )
+    try:
+        send_telegram_notification(notification)
+    except Exception:
+        logger.exception('Could not send Telegram notification for purchase %s.', purchase.order_reference)
+        return
+
+    purchase.telegram_notified_at = timezone.now()
+    purchase.save(update_fields=('telegram_notified_at',))
 
 
 @login_required
@@ -131,6 +154,7 @@ def wayforpay_callback(request):
             order.status = GamePurchase.Status.PAID
             order.paid_at = timezone.now()
             order.save(update_fields=('status', 'paid_at'))
+        notify_purchase_in_telegram(order)
     response_time = int(time.time())
     response_fields = [order_reference, 'accept', response_time]
     return JsonResponse({
@@ -166,7 +190,7 @@ def add_free_game(request, pk):
 def register(request):
     if request.user.is_authenticated:
         return redirect('home')
-    form = UserCreationForm(request.POST or None)
+    form = RegistrationForm(request.POST or None)
     if request.method == 'POST' and form.is_valid():
         user = form.save()
         login(request, user)
