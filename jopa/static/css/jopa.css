@@ -188,6 +188,13 @@ body { background: #111315; }
 .team-info .game-developer { margin-top:0; color:#969da4; font-size:11px; }
 .esports-description { min-height:38px; margin:14px 0 10px; color:#b1b6bb; font-size:12px; line-height:1.55; }
 .game-stats { border:1px solid #383d43; background:#22262b; }
+.catalog-search { display:flex; flex-wrap:wrap; gap:8px; margin:0 0 14px; }
+.catalog-search input,.catalog-search select { min-height:36px; padding:7px 10px; border:1px solid #383d43; background:#171a1e; color:#d0d3d6; font:inherit; font-size:12px; }
+.catalog-search input { flex:1 1 220px; min-width:150px; }
+.catalog-search select { flex:0 1 170px; }
+.catalog-search button,.catalog-search a { display:inline-flex; align-items:center; justify-content:center; min-height:36px; padding:7px 12px; border:1px solid #454b51; background:#292d32; color:#d5d8db; font:inherit; font-size:12px; text-decoration:none; cursor:pointer; }
+.catalog-search button:hover,.catalog-search a:hover { border-color:#70777e; background:#30353a; }
+.sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
 .stat-row { display:flex; justify-content:space-between; gap:10px; padding:9px 10px; color:#858c93; font-size:10px; }
 .stat-row + .stat-row { border-top:1px solid #363b40; }
 .stat-row strong { overflow:hidden; color:#d0d3d6; font-size:10px; text-overflow:ellipsis; white-space:nowrap; }

@@ -12,6 +12,7 @@ from django.conf import settings
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.db.models import Count, Q
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -20,17 +21,45 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
 from .forms import GameSubmissionForm, RegistrationForm
-from .models import GamePurchase, GameSubmission, games
+from .models import CatalogType, GamePurchase, GameSubmission, games
 
 logger = logging.getLogger(__name__)
 
 
 def home(request):
-    games_list = games.objects.all()
+    search_query = request.GET.get('q', '').strip()[:100]
+    selected_kind = request.GET.get('kind', '').strip()
+    valid_kinds = {value for value, _label in CatalogType.choices}
+
+    games_queryset = games.objects.all()
+    if search_query:
+        games_queryset = games_queryset.filter(
+            Q(name__icontains=search_query)
+            | Q(description__icontains=search_query)
+            | Q(developer__icontains=search_query)
+        )
+    if selected_kind in valid_kinds:
+        games_queryset = games_queryset.filter(kind=selected_kind)
+
+    games_list = games_queryset.annotate(
+        sales_count=Count(
+            'purchases',
+            filter=Q(
+                purchases__status=GamePurchase.Status.PAID,
+                purchases__amount__gt=0,
+            ),
+        )
+    )
     owned_ids = set()
     if request.user.is_authenticated:
         owned_ids = set(GamePurchase.objects.filter(user=request.user, status=GamePurchase.Status.PAID).values_list('game_id', flat=True))
-    return render(request, 'index.html', {'games': games_list, 'owned_ids': owned_ids})
+    return render(request, 'index.html', {
+        'games': games_list,
+        'owned_ids': owned_ids,
+        'search_query': search_query,
+        'selected_kind': selected_kind if selected_kind in valid_kinds else '',
+        'kind_choices': CatalogType.choices,
+    })
 
 
 def _wayforpay_signature(fields):
@@ -199,7 +228,18 @@ def register(request):
 
 
 def game_detail(request, pk):
-    game = get_object_or_404(games, pk=pk)
+    game = get_object_or_404(
+        games.objects.annotate(
+            sales_count=Count(
+                'purchases',
+                filter=Q(
+                    purchases__status=GamePurchase.Status.PAID,
+                    purchases__amount__gt=0,
+                ),
+            )
+        ),
+        pk=pk,
+    )
     return render(request, 'game_detail.html', {'game': game})
 
 
