@@ -103,6 +103,7 @@ def home(request):
         'max_price': max_price,
         'ordering': ordering,
         'favorite_ids': favorite_ids,
+        'latest_news': NewsPost.objects.filter(published=True).order_by('-created_at')[:5],
     })
 
 
