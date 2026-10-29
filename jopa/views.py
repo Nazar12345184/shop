@@ -10,7 +10,7 @@ from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
 from django.conf import settings
-from django.contrib.auth import login
+from django.contrib.auth import get_user_model, login
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Avg, Count, Q
@@ -23,7 +23,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
 from .forms import GameReviewForm, GameSubmissionForm, ProfileForm, RegistrationForm
-from .models import CatalogType, Favorite, GamePurchase, GameReview, GameSubmission, TelegramProfile, games
+from .models import CatalogType, Favorite, GamePurchase, GameReview, GameSubmission, SiteNotification, TelegramProfile, games
 
 logger = logging.getLogger(__name__)
 
@@ -287,13 +287,39 @@ def profile(request):
         return redirect('profile')
     submissions = GameSubmission.objects.filter(submitter_user=request.user)
     purchases = GamePurchase.objects.filter(user=request.user).select_related('game')
+    notifications = SiteNotification.objects.filter(user=request.user)
     return render(request, 'profile.html', {
         'form': form,
         'submissions': submissions,
         'purchases': purchases,
         'favorites_count': Favorite.objects.filter(user=request.user).count(),
         'reviews_count': GameReview.objects.filter(user=request.user).count(),
+        'notifications': notifications,
+        'unread_notifications': notifications.filter(read_at__isnull=True).count(),
     })
+
+
+def author_detail(request, pk):
+    author = get_object_or_404(get_user_model(), pk=pk)
+    author_games = games.objects.filter(author=author).annotate(
+        sales_count=Count('purchases', distinct=True, filter=Q(purchases__status=GamePurchase.Status.PAID, purchases__amount__gt=0)),
+        average_rating=Avg('reviews__rating'),
+        review_count=Count('reviews', distinct=True),
+    )
+    if not author_games.exists():
+        from django.http import Http404
+        raise Http404
+    return render(request, 'author_detail.html', {'author': author, 'games': author_games})
+
+
+@login_required
+@require_POST
+def read_notification(request, pk):
+    notification = get_object_or_404(SiteNotification, pk=pk, user=request.user)
+    if notification.read_at is None:
+        notification.read_at = timezone.now()
+        notification.save(update_fields=('read_at',))
+    return redirect('profile')
 
 
 @login_required

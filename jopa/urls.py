@@ -1,5 +1,5 @@
 from django.urls import include, path
-from .views import add_free_game, buy_game, game_detail, home, library, profile, register, submit_game, submit_review, toggle_favorite, wayforpay_callback
+from .views import add_free_game, author_detail, buy_game, game_detail, home, library, profile, read_notification, register, submit_game, submit_review, toggle_favorite, wayforpay_callback
 
 urlpatterns = [
     path('', home, name='home'),
@@ -10,6 +10,8 @@ urlpatterns = [
     path('accounts/', include('django.contrib.auth.urls')),
     path('library/', library, name='library'),
     path('profile/', profile, name='profile'),
+    path('author/<int:pk>/', author_detail, name='author_detail'),
+    path('notifications/<int:pk>/read/', read_notification, name='read_notification'),
     path('favorite/<int:pk>/toggle/', toggle_favorite, name='toggle_favorite'),
     path('game/<int:pk>/review/', submit_review, name='submit_review'),
     path('buy/<int:pk>/', buy_game, name='buy_game'),

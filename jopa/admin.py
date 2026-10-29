@@ -4,7 +4,7 @@ from pathlib import Path
 from django.conf import settings
 from django.contrib import admin
 from django.contrib import messages
-from .models import Favorite, GamePurchase, GameReview, GameScreenshot, GameSubmission, TelegramProfile, games
+from .models import Favorite, GamePurchase, GameReview, GameScreenshot, GameSubmission, SiteNotification, TelegramProfile, games
 
 
 def write_game_json(game):
@@ -20,6 +20,7 @@ def write_game_json(game):
         'genre': game.genre,
         'system_requirements': game.system_requirements,
         'contact_telegram': game.contact_telegram,
+        'author': game.author.username if game.author_id else '',
         'photo': game.photo.name if game.photo else '',
         'link': game.link,
         'price': str(game.price) if game.price is not None else None,
@@ -72,21 +73,37 @@ class GameSubmissionAdmin(admin.ModelAdmin):
                 genre=submission.genre,
                 system_requirements=submission.system_requirements,
                 contact_telegram=submission.submitter_telegram,
+                author=submission.submitter_user,
                 photo=submission.photo.name if submission.photo else None,
                 link=submission.link,
                 price=submission.price,
             )
             write_game_json(game)
             submission.status = GameSubmission.Status.APPROVED
-            submission.save(update_fields=('status',))
+            submission.published_game = game
+            submission.save(update_fields=('status', 'published_game'))
+            if submission.submitter_user_id:
+                SiteNotification.objects.create(
+                    user=submission.submitter_user,
+                    submission=submission,
+                    message=f'Заявку «{submission.name}» схвалено та опубліковано.',
+                )
             approved += 1
         self.message_user(request, f'Схвалено заявок: {approved}. Ігри додано до каталогу.', messages.SUCCESS)
 
     @admin.action(description='Відхилити вибрані заявки')
     def reject_submissions(self, request, queryset):
-        rejected = queryset.filter(status=GameSubmission.Status.PENDING).update(
-            status=GameSubmission.Status.REJECTED
-        )
+        rejected = 0
+        for submission in queryset.filter(status=GameSubmission.Status.PENDING):
+            submission.status = GameSubmission.Status.REJECTED
+            submission.save(update_fields=('status',))
+            if submission.submitter_user_id:
+                SiteNotification.objects.create(
+                    user=submission.submitter_user,
+                    submission=submission,
+                    message=f'Заявку «{submission.name}» відхилено. Можеш подати іншу пропозицію.',
+                )
+            rejected += 1
         self.message_user(request, f'Відхилено заявок: {rejected}.', messages.INFO)
 
 # Register your models here.

@@ -227,6 +227,11 @@ body { background: #111315; }
 .status-approved { border-color:#3d5948; color:#aad0b5; }
 .status-rejected { border-color:#624442; color:#d8aaa5; }
 .profile-form { margin:18px 0; }
+.notification-item { align-items:flex-start; }
+.notification-unread { border-left:3px solid #92989e; background:#24272b; }
+.notification-count { margin-left:8px; color:#bfc4c8; font-size:12px; }
+.author-cards { margin-top:18px; }
+.author-cards .esports-game-card { display:flex; flex-direction:column; gap:10px; }
 @media(max-width:540px) { .catalog-search input[type="number"] { flex:1 1 100px; } .detail-heading { align-items:flex-start; gap:12px; } .detail-cover { flex-basis:90px; width:90px; height:90px; } .detail-panel,.reviews-section { padding:14px; } .review-head { flex-wrap:wrap; } }
 .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
 .stat-row { display:flex; justify-content:space-between; gap:10px; padding:9px 10px; color:#858c93; font-size:10px; }
