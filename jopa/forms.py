@@ -4,7 +4,7 @@ import re
 
 from django.contrib.auth import get_user_model
 
-from .models import CatalogType, GameReview, GameSubmission, TelegramProfile, games
+from .models import CatalogType, GameReview, GameSubmission, NewsPost, SiteConfiguration, TelegramProfile, games
 
 
 class RegistrationForm(UserCreationForm):
@@ -151,3 +151,51 @@ class SiteUserAccessForm(forms.ModelForm):
             'is_staff': 'Доступ до адмінки',
             'is_superuser': 'Повні права',
         }
+
+
+class SiteConfigurationForm(forms.ModelForm):
+    class Meta:
+        model = SiteConfiguration
+        fields = (
+            'site_name', 'tagline', 'home_title', 'home_subtitle',
+            'announcement_active', 'announcement_text', 'announcement_link',
+            'background_color', 'panel_color', 'text_color', 'muted_color', 'accent_color', 'border_color',
+        )
+        labels = {
+            'site_name': 'Назва сайту',
+            'tagline': 'Підпис біля назви',
+            'home_title': 'Заголовок каталогу',
+            'home_subtitle': 'Текст під заголовком',
+            'announcement_active': 'Показувати оголошення',
+            'announcement_text': 'Текст оголошення',
+            'announcement_link': 'Посилання з оголошення',
+            'background_color': 'Колір тла',
+            'panel_color': 'Колір блоків',
+            'text_color': 'Колір основного тексту',
+            'muted_color': 'Колір другорядного тексту',
+            'accent_color': 'Колір акцентів і посилань',
+            'border_color': 'Колір рамок',
+        }
+        widgets = {
+            'home_subtitle': forms.Textarea(attrs={'rows': 2}),
+            'announcement_text': forms.Textarea(attrs={'rows': 2}),
+            'background_color': forms.TextInput(attrs={'type': 'color'}),
+            'panel_color': forms.TextInput(attrs={'type': 'color'}),
+            'text_color': forms.TextInput(attrs={'type': 'color'}),
+            'muted_color': forms.TextInput(attrs={'type': 'color'}),
+            'accent_color': forms.TextInput(attrs={'type': 'color'}),
+            'border_color': forms.TextInput(attrs={'type': 'color'}),
+        }
+
+
+class NewsPostForm(forms.ModelForm):
+    class Meta:
+        model = NewsPost
+        fields = ('title', 'body', 'link', 'published')
+        labels = {
+            'title': 'Заголовок',
+            'body': 'Текст новини',
+            'link': 'Посилання (необов’язково)',
+            'published': 'Опублікувати на сайті',
+        }
+        widgets = {'body': forms.Textarea(attrs={'rows': 3})}

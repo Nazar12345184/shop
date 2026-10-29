@@ -1,5 +1,5 @@
 from django.db import models
-from django.core.validators import MinValueValidator, MaxValueValidator
+from django.core.validators import MinValueValidator, MaxValueValidator, RegexValidator
 from django.core.exceptions import ValidationError
 from django.conf import settings
 from django.utils import timezone
@@ -209,3 +209,56 @@ class SiteNotification(models.Model):
 
     def __str__(self):
         return f'{self.user}: {self.message}'
+
+
+class SiteConfiguration(models.Model):
+    color_validator = RegexValidator(r'^#[0-9A-Fa-f]{6}$', 'Вкажи колір у форматі #RRGGBB.')
+    site_name = models.CharField(max_length=80, default='GAME HUB')
+    tagline = models.CharField(max_length=160, default='Ігри та проєкти')
+    home_title = models.CharField(max_length=120, default='Ігри та проєкти')
+    home_subtitle = models.CharField(max_length=240, blank=True, default='')
+    announcement_active = models.BooleanField(default=False)
+    announcement_text = models.CharField(max_length=240, blank=True)
+    announcement_link = models.URLField(blank=True)
+    background_color = models.CharField(max_length=7, default='#111315', validators=[color_validator])
+    panel_color = models.CharField(max_length=7, default='#1b1e22', validators=[color_validator])
+    text_color = models.CharField(max_length=7, default='#e0e2e4', validators=[color_validator])
+    muted_color = models.CharField(max_length=7, default='#92989e', validators=[color_validator])
+    accent_color = models.CharField(max_length=7, default='#aeb4ba', validators=[color_validator])
+    border_color = models.CharField(max_length=7, default='#34383e', validators=[color_validator])
+
+    class Meta:
+        verbose_name = 'налаштування сайту'
+        verbose_name_plural = 'налаштування сайту'
+
+    def __str__(self):
+        return self.site_name
+
+    @classmethod
+    def current(cls):
+        config, _created = cls.objects.get_or_create(pk=1)
+        return config
+
+
+class NewsPost(models.Model):
+    title = models.CharField(max_length=120)
+    body = models.TextField(max_length=3000)
+    link = models.URLField(blank=True)
+    published = models.BooleanField(default=True)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='site_news_posts',
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ('-created_at',)
+        verbose_name = 'новина'
+        verbose_name_plural = 'новини'
+
+    def __str__(self):
+        return self.title

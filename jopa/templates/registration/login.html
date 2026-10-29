@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="uk">
-<head>{% load static %}<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Увійти</title><link rel="stylesheet" href="{% static 'css/jopa.css' %}?v=14"></head>
-<body><header class="esports-topbar"><nav class="topbar-nav"><a href="{% url 'home' %}">Каталог</a><a href="{% url 'register' %}">Створити акаунт</a><a class="nav-current" href="{% url 'login' %}">Увійти</a></nav></header>
+<head>{% load static %}<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Увійти</title><link rel="stylesheet" href="{% static 'css/jopa.css' %}?v=21"></head>
+<body style='--site-bg:{{ site_config.background_color }};--site-panel:{{ site_config.panel_color }};--site-text:{{ site_config.text_color }};--site-muted:{{ site_config.muted_color }};--site-accent:{{ site_config.accent_color }};--site-border:{{ site_config.border_color }}'><header class="esports-topbar"><nav class="topbar-nav"><a href="{% url 'home' %}">Каталог</a><a href="{% url 'register' %}">Створити акаунт</a><a class="nav-current" href="{% url 'login' %}">Увійти</a></nav></header>
 <main class="catalog submit-page"><header class="submit-heading"><p class="eyebrow">БІБЛІОТЕКА ІГОР</p><h1>Увійти</h1><p class="subtitle">Увійдіть, щоб переглянути свою бібліотеку.</p></header>
 <form method="post" class="submission-form account-form">{% csrf_token %}{{ form.as_p }}{% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}<button class="submit-button" type="submit">Увійти <span>→</span></button><p><a href="{% url 'register' %}">Створити акаунт</a></p></form></main></body></html>

@@ -5,9 +5,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Запропонувати в каталог</title>
-    <link rel="stylesheet" href="{% static 'css/jopa.css' %}?v=15">
+    <link rel="stylesheet" href="{% static 'css/jopa.css' %}?v=21">
 </head>
-<body>
+<body style='--site-bg:{{ site_config.background_color }};--site-panel:{{ site_config.panel_color }};--site-text:{{ site_config.text_color }};--site-muted:{{ site_config.muted_color }};--site-accent:{{ site_config.accent_color }};--site-border:{{ site_config.border_color }}'>
 <nav class="topbar">
     <a class="topbar-link" href="{% url 'home' %}">← До колекції</a>
     <span class="topbar-note">Запропонуй гру, проєкт або послугу</span>

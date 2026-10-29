@@ -23,8 +23,8 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
-from .forms import GameReviewForm, GameSubmissionForm, ProfileForm, RegistrationForm, SiteGameAdminForm, SiteUserAccessForm
-from .models import CatalogType, Favorite, GamePurchase, GameReview, GameSubmission, SiteNotification, TelegramProfile, games
+from .forms import GameReviewForm, GameSubmissionForm, NewsPostForm, ProfileForm, RegistrationForm, SiteConfigurationForm, SiteGameAdminForm, SiteUserAccessForm
+from .models import CatalogType, Favorite, GamePurchase, GameReview, GameSubmission, NewsPost, SiteConfiguration, SiteNotification, TelegramProfile, games
 
 logger = logging.getLogger(__name__)
 
@@ -341,6 +341,39 @@ def manage_site(request):
     selected_game = games.objects.filter(pk=selected_id).first() if selected_id else all_games.first()
     game_form = SiteGameAdminForm(instance=selected_game)
     access_overrides = {}
+    news_overrides = {}
+    config = SiteConfiguration.current()
+    config_form = SiteConfigurationForm(instance=config)
+    new_news_form = NewsPostForm()
+
+    if request.method == 'POST' and request.POST.get('action') == 'save_config':
+        config_form = SiteConfigurationForm(request.POST, instance=config)
+        if config_form.is_valid():
+            config_form.save()
+            messages.success(request, 'Налаштування сайту збережено.')
+            return redirect(f'{reverse("manage_site")}#appearance')
+
+    if request.method == 'POST' and request.POST.get('action') == 'save_news':
+        news_id = request.POST.get('news_id')
+        news_item = get_object_or_404(NewsPost, pk=news_id) if news_id else None
+        news_form = NewsPostForm(request.POST, instance=news_item)
+        if news_form.is_valid():
+            saved_news = news_form.save(commit=False)
+            if saved_news.pk is None:
+                saved_news.created_by = request.user
+            saved_news.save()
+            messages.success(request, 'Новину збережено.')
+            return redirect(f'{reverse("manage_site")}#news')
+        if news_item:
+            news_overrides[news_item.pk] = news_form
+        else:
+            new_news_form = news_form
+
+    if request.method == 'POST' and request.POST.get('action') == 'delete_news':
+        news_item = get_object_or_404(NewsPost, pk=request.POST.get('news_id'))
+        news_item.delete()
+        messages.success(request, 'Новину видалено.')
+        return redirect(f'{reverse("manage_site")}#news')
 
     if request.method == 'POST' and request.POST.get('action') == 'save_game':
         selected_game = get_object_or_404(games, pk=request.POST.get('game_id'))
@@ -375,12 +408,19 @@ def manage_site(request):
         (user, access_overrides.get(user.pk) or SiteUserAccessForm(instance=user))
         for user in users
     ]
+    news_rows = [
+        (news_item, news_overrides.get(news_item.pk) or NewsPostForm(instance=news_item))
+        for news_item in NewsPost.objects.order_by('-created_at')[:30]
+    ]
     return render(request, 'manage.html', {
         'games': all_games,
         'selected_game': selected_game,
         'game_form': game_form,
         'access_rows': access_rows,
         'can_manage_users': request.user.is_superuser,
+        'config_form': config_form,
+        'new_news_form': new_news_form,
+        'news_rows': news_rows,
     })
 
 
