@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Запропонувати в каталог</title>
-    <link rel="stylesheet" href="{% static 'css/jopa.css' %}?v=14">
+    <link rel="stylesheet" href="{% static 'css/jopa.css' %}?v=15">
 </head>
 <body>
 <nav class="topbar">
@@ -28,7 +28,7 @@
         {% if form.non_field_errors %}<div class="form-errors">{{ form.non_field_errors }}</div>{% endif %}
         <div class="form-grid">
             {% for field in form %}
-                <div class="form-field {% if field.name == 'description' or field.name == 'photo' %}form-field-wide{% endif %}">
+                <div class="form-field {% if field.name == 'description' or field.name == 'photo' or field.name == 'system_requirements' %}form-field-wide{% endif %}">
                     <label for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %}<span class="required-mark">*</span>{% endif %}</label>
                     {{ field }}
                     {% if field.help_text %}<small>{{ field.help_text }}</small>{% endif %}

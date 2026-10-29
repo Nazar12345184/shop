@@ -4,6 +4,7 @@ import hashlib
 import hmac
 import time
 import uuid
+from decimal import Decimal, InvalidOperation
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
@@ -12,16 +13,17 @@ from django.conf import settings
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.db.models import Count, Q
+from django.db.models import Avg, Count, Q
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
-from .forms import GameSubmissionForm, RegistrationForm
-from .models import CatalogType, GamePurchase, GameSubmission, games
+from .forms import GameReviewForm, GameSubmissionForm, ProfileForm, RegistrationForm
+from .models import CatalogType, Favorite, GamePurchase, GameReview, GameSubmission, TelegramProfile, games
 
 logger = logging.getLogger(__name__)
 
@@ -29,6 +31,10 @@ logger = logging.getLogger(__name__)
 def home(request):
     search_query = request.GET.get('q', '').strip()[:100]
     selected_kind = request.GET.get('kind', '').strip()
+    selected_genre = request.GET.get('genre', '').strip()[:80]
+    min_price = request.GET.get('min_price', '').strip()
+    max_price = request.GET.get('max_price', '').strip()
+    ordering = request.GET.get('sort', 'newest')
     valid_kinds = {value for value, _label in CatalogType.choices}
 
     games_queryset = games.objects.all()
@@ -37,28 +43,65 @@ def home(request):
             Q(name__icontains=search_query)
             | Q(description__icontains=search_query)
             | Q(developer__icontains=search_query)
+            | Q(genre__icontains=search_query)
         )
     if selected_kind in valid_kinds:
         games_queryset = games_queryset.filter(kind=selected_kind)
+    if selected_genre:
+        games_queryset = games_queryset.filter(genre__iexact=selected_genre)
+    try:
+        min_value = Decimal(min_price) if min_price else None
+        if min_value is not None and (not min_value.is_finite() or min_value < 0):
+            raise InvalidOperation
+    except InvalidOperation:
+        min_price, min_value = '', None
+    try:
+        max_value = Decimal(max_price) if max_price else None
+        if max_value is not None and (not max_value.is_finite() or max_value < 0):
+            raise InvalidOperation
+    except InvalidOperation:
+        max_price, max_value = '', None
+    if min_value is not None and max_value is not None and max_value < min_value:
+        min_price = max_price = ''
+        min_value = max_value = None
+    if min_value is not None:
+        games_queryset = games_queryset.filter(price__gte=min_value)
+    if max_value is not None:
+        games_queryset = games_queryset.filter(price__lte=max_value)
 
     games_list = games_queryset.annotate(
         sales_count=Count(
             'purchases',
+            distinct=True,
             filter=Q(
                 purchases__status=GamePurchase.Status.PAID,
                 purchases__amount__gt=0,
             ),
-        )
+        ),
+        average_rating=Avg('reviews__rating'),
+        review_count=Count('reviews', distinct=True),
     )
+    sort_options = {'newest': '-pk', 'price_low': 'price', 'price_high': '-price', 'popular': '-sales_count', 'rating': '-average_rating'}
+    if ordering not in sort_options:
+        ordering = 'newest'
+    games_list = games_list.order_by(sort_options[ordering], '-pk')
     owned_ids = set()
+    favorite_ids = set()
     if request.user.is_authenticated:
         owned_ids = set(GamePurchase.objects.filter(user=request.user, status=GamePurchase.Status.PAID).values_list('game_id', flat=True))
+        favorite_ids = set(Favorite.objects.filter(user=request.user).values_list('game_id', flat=True))
     return render(request, 'index.html', {
         'games': games_list,
         'owned_ids': owned_ids,
         'search_query': search_query,
         'selected_kind': selected_kind if selected_kind in valid_kinds else '',
         'kind_choices': CatalogType.choices,
+        'genres': games.objects.exclude(genre='').order_by('genre').values_list('genre', flat=True).distinct(),
+        'selected_genre': selected_genre,
+        'min_price': min_price,
+        'max_price': max_price,
+        'ordering': ordering,
+        'favorite_ids': favorite_ids,
     })
 
 
@@ -197,7 +240,60 @@ def wayforpay_callback(request):
 @login_required
 def library(request):
     purchases = GamePurchase.objects.filter(user=request.user, status=GamePurchase.Status.PAID).select_related('game')
-    return render(request, 'library.html', {'purchases': purchases})
+    favorites = Favorite.objects.filter(user=request.user).select_related('game')
+    return render(request, 'library.html', {'purchases': purchases, 'favorites': favorites})
+
+
+@login_required
+@require_POST
+def toggle_favorite(request, pk):
+    game = get_object_or_404(games, pk=pk)
+    favorite, created = Favorite.objects.get_or_create(user=request.user, game=game)
+    if not created:
+        favorite.delete()
+    next_url = request.POST.get('next', '')
+    if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts={request.get_host()}, require_https=request.is_secure()):
+        return redirect(next_url)
+    return redirect('home')
+
+
+@login_required
+@require_POST
+def submit_review(request, pk):
+    game = get_object_or_404(games, pk=pk)
+    review = GameReview.objects.filter(user=request.user, game=game).first()
+    form = GameReviewForm(request.POST, instance=review)
+    if form.is_valid():
+        saved_review = form.save(commit=False)
+        saved_review.user = request.user
+        saved_review.game = game
+        saved_review.save()
+        messages.success(request, 'Відгук збережено.')
+    else:
+        messages.error(request, 'Перевір оцінку та текст відгуку.')
+    return redirect('game_detail', pk=game.pk)
+
+
+@login_required
+def profile(request):
+    profile_obj, _created = TelegramProfile.objects.get_or_create(
+        user=request.user,
+        defaults={'telegram_username': f'user_{request.user.pk}'},
+    )
+    form = ProfileForm(request.POST or None, instance=profile_obj, user=request.user)
+    if request.method == 'POST' and form.is_valid():
+        form.save()
+        messages.success(request, 'Профіль збережено.')
+        return redirect('profile')
+    submissions = GameSubmission.objects.filter(submitter_user=request.user)
+    purchases = GamePurchase.objects.filter(user=request.user).select_related('game')
+    return render(request, 'profile.html', {
+        'form': form,
+        'submissions': submissions,
+        'purchases': purchases,
+        'favorites_count': Favorite.objects.filter(user=request.user).count(),
+        'reviews_count': GameReview.objects.filter(user=request.user).count(),
+    })
 
 
 @login_required
@@ -232,15 +328,28 @@ def game_detail(request, pk):
         games.objects.annotate(
             sales_count=Count(
                 'purchases',
+                distinct=True,
                 filter=Q(
                     purchases__status=GamePurchase.Status.PAID,
                     purchases__amount__gt=0,
                 ),
-            )
+            ),
+            average_rating=Avg('reviews__rating'),
+            review_count=Count('reviews', distinct=True),
         ),
         pk=pk,
     )
-    return render(request, 'game_detail.html', {'game': game})
+    review = None
+    is_favorite = False
+    if request.user.is_authenticated:
+        review = GameReview.objects.filter(user=request.user, game=game).first()
+        is_favorite = Favorite.objects.filter(user=request.user, game=game).exists()
+    return render(request, 'game_detail.html', {
+        'game': game,
+        'reviews': game.reviews.select_related('user').all(),
+        'review_form': GameReviewForm(instance=review),
+        'is_favorite': is_favorite,
+    })
 
 
 def send_telegram_notification(text):
@@ -276,6 +385,9 @@ def submit_game(request):
         form = GameSubmissionForm(request.POST, request.FILES)
         if form.is_valid():
             submission = form.save()
+            if request.user.is_authenticated:
+                submission.submitter_user = request.user
+                submission.save(update_fields=('submitter_user',))
             review_url = request.build_absolute_uri(
                 reverse('admin:jopa_gamesubmission_change', args=(submission.pk,))
             )

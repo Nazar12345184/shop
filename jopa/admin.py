@@ -4,7 +4,7 @@ from pathlib import Path
 from django.conf import settings
 from django.contrib import admin
 from django.contrib import messages
-from .models import GamePurchase, GameSubmission, TelegramProfile, games
+from .models import Favorite, GamePurchase, GameReview, GameScreenshot, GameSubmission, TelegramProfile, games
 
 
 def write_game_json(game):
@@ -17,6 +17,9 @@ def write_game_json(game):
         'description': game.description,
         'release_date': game.release_date.isoformat() if game.release_date else None,
         'developer': game.developer,
+        'genre': game.genre,
+        'system_requirements': game.system_requirements,
+        'contact_telegram': game.contact_telegram,
         'photo': game.photo.name if game.photo else '',
         'link': game.link,
         'price': str(game.price) if game.price is not None else None,
@@ -27,12 +30,18 @@ def write_game_json(game):
     )
 
 
+class GameScreenshotInline(admin.TabularInline):
+    model = GameScreenshot
+    extra = 1
+
+
 @admin.register(games)
 class GamesAdmin(admin.ModelAdmin):
-    list_display = ('name', 'kind', 'developer', 'release_date', 'price')
-    search_fields = ('name', 'developer')
-    list_filter = ('kind',)
+    list_display = ('name', 'kind', 'genre', 'developer', 'release_date', 'price')
+    search_fields = ('name', 'developer', 'genre')
+    list_filter = ('kind', 'genre')
     ordering = ('name',)
+    inlines = (GameScreenshotInline,)
 
     def save_model(self, request, obj, form, change):
         super().save_model(request, obj, form, change)
@@ -60,6 +69,9 @@ class GameSubmissionAdmin(admin.ModelAdmin):
                 description=submission.description,
                 release_date=submission.release_date,
                 developer=submission.developer,
+                genre=submission.genre,
+                system_requirements=submission.system_requirements,
+                contact_telegram=submission.submitter_telegram,
                 photo=submission.photo.name if submission.photo else None,
                 link=submission.link,
                 price=submission.price,
@@ -98,3 +110,18 @@ class GamePurchaseAdmin(admin.ModelAdmin):
 
     def has_delete_permission(self, request, obj=None):
         return False
+
+
+@admin.register(GameReview)
+class GameReviewAdmin(admin.ModelAdmin):
+    list_display = ('game', 'user', 'rating', 'updated_at')
+    list_filter = ('rating',)
+    search_fields = ('game__name', 'user__username', 'text')
+    readonly_fields = ('user', 'game', 'created_at', 'updated_at')
+
+
+@admin.register(Favorite)
+class FavoriteAdmin(admin.ModelAdmin):
+    list_display = ('user', 'game', 'created_at')
+    search_fields = ('user__username', 'game__name')
+    readonly_fields = ('user', 'game', 'created_at')
