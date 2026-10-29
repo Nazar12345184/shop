@@ -159,7 +159,8 @@ class SiteConfigurationForm(forms.ModelForm):
         fields = (
             'site_name', 'tagline', 'home_title', 'home_subtitle',
             'announcement_active', 'announcement_text', 'announcement_link',
-            'background_color', 'panel_color', 'text_color', 'muted_color', 'accent_color', 'border_color',
+            'background_color', 'panel_color', 'card_color', 'control_color', 'header_color',
+            'text_color', 'muted_color', 'accent_color', 'border_color',
         )
         labels = {
             'site_name': 'Назва сайту',
@@ -170,7 +171,10 @@ class SiteConfigurationForm(forms.ModelForm):
             'announcement_text': 'Текст оголошення',
             'announcement_link': 'Посилання з оголошення',
             'background_color': 'Колір тла',
-            'panel_color': 'Колір блоків',
+            'panel_color': 'Колір бокових панелей',
+            'card_color': 'Колір карток і блоків ігор',
+            'control_color': 'Колір полів і кнопок',
+            'header_color': 'Колір верхньої панелі',
             'text_color': 'Колір основного тексту',
             'muted_color': 'Колір другорядного тексту',
             'accent_color': 'Колір акцентів і посилань',
@@ -181,6 +185,9 @@ class SiteConfigurationForm(forms.ModelForm):
             'announcement_text': forms.Textarea(attrs={'rows': 2}),
             'background_color': forms.TextInput(attrs={'type': 'color'}),
             'panel_color': forms.TextInput(attrs={'type': 'color'}),
+            'card_color': forms.TextInput(attrs={'type': 'color'}),
+            'control_color': forms.TextInput(attrs={'type': 'color'}),
+            'header_color': forms.TextInput(attrs={'type': 'color'}),
             'text_color': forms.TextInput(attrs={'type': 'color'}),
             'muted_color': forms.TextInput(attrs={'type': 'color'}),
             'accent_color': forms.TextInput(attrs={'type': 'color'}),

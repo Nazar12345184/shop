@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="uk">
-<head>{% load static %}<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Керування сайтом</title><link rel="stylesheet" href="{% static 'css/jopa.css' %}?v=21"></head>
-<body style="--site-bg:{{ site_config.background_color }};--site-panel:{{ site_config.panel_color }};--site-text:{{ site_config.text_color }};--site-muted:{{ site_config.muted_color }};--site-accent:{{ site_config.accent_color }};--site-border:{{ site_config.border_color }}">
+<head>{% load static %}<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Керування сайтом</title><link rel="stylesheet" href="{% static 'css/jopa.css' %}?v=22"></head>
+<body style="--site-bg:{{ site_config.background_color }};--site-panel:{{ site_config.panel_color }};--site-card:{{ site_config.card_color }};--site-control:{{ site_config.control_color }};--site-header:{{ site_config.header_color }};--site-text:{{ site_config.text_color }};--site-muted:{{ site_config.muted_color }};--site-accent:{{ site_config.accent_color }};--site-border:{{ site_config.border_color }}">
 <header class="esports-topbar"><a class="brand" href="{% url 'home' %}"><span class="brand-mark">G</span><span>{{ site_config.site_name }}<small>{{ site_config.tagline }}</small></span></a><nav class="topbar-nav"><a href="{% url 'home' %}">Сайт</a><a class="nav-current" href="{% url 'manage_site' %}">Панель</a><a href="{% url 'admin:index' %}">Повна адмінка</a></nav></header>
 <main class="site-manage">
     <div class="section-heading"><div><p class="side-kicker">ПАНЕЛЬ КЕРУВАННЯ</p><h1>Керування сайтом</h1></div><span class="collection-count">{{ request.user.username }}</span></div>

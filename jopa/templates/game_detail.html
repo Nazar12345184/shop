@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="uk">
-<head>{% load static %}<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>{{ game.name }} — каталог</title><link rel="stylesheet" href="{% static 'css/jopa.css' %}?v=21"></head>
-<body style="--site-bg:{{ site_config.background_color }};--site-panel:{{ site_config.panel_color }};--site-text:{{ site_config.text_color }};--site-muted:{{ site_config.muted_color }};--site-accent:{{ site_config.accent_color }};--site-border:{{ site_config.border_color }}">
+<head>{% load static %}<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>{{ game.name }} — каталог</title><link rel="stylesheet" href="{% static 'css/jopa.css' %}?v=22"></head>
+<body style="--site-bg:{{ site_config.background_color }};--site-panel:{{ site_config.panel_color }};--site-card:{{ site_config.card_color }};--site-control:{{ site_config.control_color }};--site-header:{{ site_config.header_color }};--site-text:{{ site_config.text_color }};--site-muted:{{ site_config.muted_color }};--site-accent:{{ site_config.accent_color }};--site-border:{{ site_config.border_color }}">
 <header class="esports-topbar"><a class="brand" href="{% url 'home' %}"><span class="brand-mark">G</span><span>{{ site_config.site_name }}<small>{{ site_config.tagline }}</small></span></a><nav class="topbar-nav"><a href="{% url 'home' %}">Каталог</a>{% if request.user.is_authenticated %}<a href="{% url 'library' %}">Бібліотека</a><a href="{% url 'profile' %}">Профіль</a>{% endif %}{% if request.user.is_staff %}<a href="{% url 'manage_site' %}">Керування</a>{% endif %}</nav></header>
 <main class="catalog game-page">
     {% if messages %}{% for message in messages %}<div class="notice notice-{{ message.tags }}">{{ message }}</div>{% endfor %}{% endif %}

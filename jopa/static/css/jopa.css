@@ -260,9 +260,11 @@ body { background: #111315; }
 .user-access-form button { margin-top:6px; }
 @media(max-width:760px) { .manage-grid { grid-template-columns:1fr; } .site-manage { width:calc(100% - 20px); margin-top:20px; } .manage-section { padding:12px; } }
 :root { --bg:var(--site-bg,#111315); --surface:var(--site-panel,#1b1e22); --text:var(--site-text,#e0e2e4); --muted:var(--site-muted,#92989e); --accent:var(--site-accent,#aeb4ba); }
-body { --bg:var(--site-bg,#111315); --surface:var(--site-panel,#1b1e22); --text:var(--site-text,#e0e2e4); --muted:var(--site-muted,#92989e); --accent:var(--site-accent,#aeb4ba); background:var(--site-bg,#111315); color:var(--site-text,#e0e2e4); }
-.esports-topbar,.side-panel,.esports-game-card,.detail-panel,.reviews-section,.library-item,.manage-section { background-color:var(--site-panel,#1b1e22); border-color:var(--site-border,#34383e); }
-.esports-topbar { background:var(--site-panel,#181a1d); border-bottom-color:var(--site-border,#2b2e32); }
+body { --bg:var(--site-bg,#111315); --surface:var(--site-panel,#1b1e22); --text:var(--site-text,#e0e2e4); --muted:var(--site-muted,#92989e); --accent:var(--site-accent,#aeb4ba); --card:var(--site-card,#1c1f23); --control:var(--site-control,#202328); background:var(--site-bg,#111315); color:var(--site-text,#e0e2e4); }
+.esports-topbar,.side-panel,.manage-section { background-color:var(--site-panel,#1b1e22); border-color:var(--site-border,#34383e); }
+.esports-topbar { background:var(--site-header,#181a1d); border-bottom-color:var(--site-border,#2b2e32); }
+.esports-game-card,.detail-panel,.reviews-section,.library-item,.manage-form,.manage-game-list,.manage-user,.review-card { background-color:var(--site-card,#1c1f23); border-color:var(--site-border,#34383e); }
+.game-stats,.catalog-search,.manage-field input,.manage-field select,.manage-field textarea,.review-form select,.review-form textarea { background-color:var(--site-control,#202328); }
 .site-announcement { display:flex; align-items:center; justify-content:space-between; gap:12px; margin:0 0 15px; padding:13px 15px; border:1px solid var(--site-border,#34383e); border-left:3px solid var(--site-accent,#aeb4ba); background:var(--site-panel,#1b1e22); color:var(--site-text,#e0e2e4); font-size:13px; }
 .site-announcement a,.news-item a { color:var(--site-accent,#aeb4ba); }
 .news-item { padding:12px; border-bottom:1px solid var(--site-border,#34383e); color:var(--site-text,#e0e2e4); }
