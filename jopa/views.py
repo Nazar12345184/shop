@@ -14,7 +14,7 @@ from django.contrib.auth import get_user_model, login
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib import messages
-from django.db.models import Avg, Count, Q
+from django.db.models import Avg, Count, Q, Sum
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -345,6 +345,13 @@ def manage_site(request):
     config = SiteConfiguration.current()
     config_form = SiteConfigurationForm(instance=config)
     new_news_form = NewsPostForm()
+    paid_sales = GamePurchase.objects.filter(status=GamePurchase.Status.PAID, amount__gt=0)
+    admin_tips = (
+        'Порада: додай грі обкладинку і кілька скріншотів ? так її легше знайти.',
+        'Порада: короткий опис і жанр допомагають користувачам вибрати проєкт.',
+        'Порада: задай дати знижки, якщо хочеш, щоб вона сама закінчилася.',
+    )
+    today_tip = admin_tips[timezone.localdate().toordinal() % len(admin_tips)]
 
     if request.method == 'POST' and request.POST.get('action') == 'save_config':
         config_form = SiteConfigurationForm(request.POST, instance=config)
@@ -352,6 +359,27 @@ def manage_site(request):
             config_form.save()
             messages.success(request, 'Налаштування сайту збережено.')
             return redirect(f'{reverse("manage_site")}#appearance')
+
+    if request.method == 'POST' and request.POST.get('action') == 'reset_colors':
+        defaults = SiteConfiguration()
+        color_fields = (
+            'background_color', 'panel_color', 'card_color', 'control_color',
+            'header_color', 'text_color', 'muted_color', 'accent_color', 'border_color',
+        )
+        for field_name in color_fields:
+            setattr(config, field_name, getattr(defaults, field_name))
+        config.save(update_fields=color_fields)
+        messages.success(request, 'Кольори повернено до стандартної темної теми.')
+        return redirect(f'{reverse("manage_site")}#appearance')
+
+    if request.method == 'POST' and request.POST.get('action') == 'reset_discounts':
+        reset_count = games.objects.exclude(discount_percent=0, discount_starts_at__isnull=True, discount_ends_at__isnull=True).update(
+            discount_percent=0,
+            discount_starts_at=None,
+            discount_ends_at=None,
+        )
+        messages.success(request, f'Знижки скинуто для {reset_count} ігор. Звичайні ціни збережено.')
+        return redirect(f'{reverse("manage_site")}#discounts')
 
     if request.method == 'POST' and request.POST.get('action') == 'save_news':
         news_id = request.POST.get('news_id')
@@ -421,6 +449,13 @@ def manage_site(request):
         'config_form': config_form,
         'new_news_form': new_news_form,
         'news_rows': news_rows,
+        'admin_stats': {
+            'games': all_games.count(),
+            'sales': paid_sales.count(),
+            'revenue': paid_sales.aggregate(total=Sum('amount'))['total'] or 0,
+            'pending_submissions': GameSubmission.objects.filter(status=GameSubmission.Status.PENDING).count(),
+        },
+        'today_tip': today_tip,
     })
 
 
