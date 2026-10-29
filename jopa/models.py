@@ -1,6 +1,9 @@
 from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
+from django.core.exceptions import ValidationError
 from django.conf import settings
+from django.utils import timezone
+from decimal import Decimal, ROUND_HALF_UP
 
 
 class CatalogType(models.TextChoices):
@@ -29,6 +32,37 @@ class games(models.Model):
     photo = models.ImageField(upload_to='static/img/', blank=True, null=True)
     link = models.URLField(blank=True)
     price = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    discount_percent = models.PositiveSmallIntegerField(
+        'Знижка, %',
+        default=0,
+        validators=[MinValueValidator(0), MaxValueValidator(100)],
+        help_text='0 — без знижки, 100 — безкоштовно.',
+    )
+    discount_starts_at = models.DateTimeField('Початок знижки (UTC)', blank=True, null=True)
+    discount_ends_at = models.DateTimeField('Кінець знижки (UTC)', blank=True, null=True)
+
+    @property
+    def discount_active(self):
+        now = timezone.now()
+        return (
+            self.price is not None
+            and self.price > 0
+            and self.discount_percent > 0
+            and (self.discount_starts_at is None or self.discount_starts_at <= now)
+            and (self.discount_ends_at is None or self.discount_ends_at > now)
+        )
+
+    @property
+    def current_price(self):
+        if self.price is None or not self.discount_active:
+            return self.price
+        factor = Decimal(100 - self.discount_percent) / Decimal(100)
+        return (self.price * factor).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+
+    def clean(self):
+        super().clean()
+        if self.discount_starts_at and self.discount_ends_at and self.discount_ends_at <= self.discount_starts_at:
+            raise ValidationError({'discount_ends_at': 'Кінець знижки має бути пізніше за її початок.'})
 
     def __str__(self):
         return self.name

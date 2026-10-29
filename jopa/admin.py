@@ -4,7 +4,30 @@ from pathlib import Path
 from django.conf import settings
 from django.contrib import admin
 from django.contrib import messages
+from django.contrib.auth import get_user_model
+from django.contrib.auth.admin import UserAdmin as DjangoUserAdmin
+from django.contrib.admin.sites import NotRegistered
 from .models import Favorite, GamePurchase, GameReview, GameScreenshot, GameSubmission, SiteNotification, TelegramProfile, games
+
+
+User = get_user_model()
+try:
+    admin.site.unregister(User)
+except NotRegistered:
+    pass
+
+
+@admin.register(User)
+class SiteUserAdmin(DjangoUserAdmin):
+    list_display = ('username', 'email', 'is_active', 'is_staff', 'is_superuser', 'last_login')
+    list_filter = ('is_active', 'is_staff', 'is_superuser', 'groups')
+    search_fields = ('username', 'email', 'first_name', 'last_name')
+
+    def get_fieldsets(self, request, obj=None):
+        fieldsets = super().get_fieldsets(request, obj)
+        if request.user.is_superuser:
+            return fieldsets
+        return tuple(fieldset for fieldset in fieldsets if fieldset[0] != 'Permissions')
 
 
 def write_game_json(game):
@@ -24,6 +47,10 @@ def write_game_json(game):
         'photo': game.photo.name if game.photo else '',
         'link': game.link,
         'price': str(game.price) if game.price is not None else None,
+        'discount_percent': game.discount_percent,
+        'current_price': str(game.current_price) if game.current_price is not None else None,
+        'discount_starts_at': game.discount_starts_at.isoformat() if game.discount_starts_at else None,
+        'discount_ends_at': game.discount_ends_at.isoformat() if game.discount_ends_at else None,
     }
     (output_dir / f'game-{game.pk}.json').write_text(
         json.dumps(payload, ensure_ascii=False, indent=2),
@@ -38,7 +65,7 @@ class GameScreenshotInline(admin.TabularInline):
 
 @admin.register(games)
 class GamesAdmin(admin.ModelAdmin):
-    list_display = ('name', 'kind', 'genre', 'developer', 'release_date', 'price')
+    list_display = ('name', 'kind', 'genre', 'developer', 'release_date', 'price', 'discount_percent')
     search_fields = ('name', 'developer', 'genre')
     list_filter = ('kind', 'genre')
     ordering = ('name',)

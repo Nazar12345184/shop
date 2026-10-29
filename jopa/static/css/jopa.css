@@ -232,6 +232,9 @@ body { background: #111315; }
 .notification-count { margin-left:8px; color:#bfc4c8; font-size:12px; }
 .author-cards { margin-top:18px; }
 .author-cards .esports-game-card { display:flex; flex-direction:column; gap:10px; }
+.sale-price { color:#c7c7c7; }
+.discount-badge { display:inline-block; padding:3px 6px; border:1px solid #666; background:#353535; color:#f0f0f0; font-size:10px; font-weight:800; white-space:nowrap; }
+.game-stats del,.game-details del { color:#858a8e; font-size:11px; font-weight:400; }
 @media(max-width:540px) { .catalog-search input[type="number"] { flex:1 1 100px; } .detail-heading { align-items:flex-start; gap:12px; } .detail-cover { flex-basis:90px; width:90px; height:90px; } .detail-panel,.reviews-section { padding:14px; } .review-head { flex-wrap:wrap; } }
 .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
 .stat-row { display:flex; justify-content:space-between; gap:10px; padding:9px 10px; color:#858c93; font-size:10px; }

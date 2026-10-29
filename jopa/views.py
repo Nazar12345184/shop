@@ -138,9 +138,20 @@ def notify_purchase_in_telegram(purchase):
 @require_POST
 def buy_game(request, pk):
     game = get_object_or_404(games, pk=pk)
-    if game.price is None or game.price <= 0:
-        messages.error(request, 'Ця гра безкоштовна — додайте її до бібліотеки.')
-        return redirect('home')
+    purchase_price = game.current_price
+    if purchase_price is None or purchase_price <= 0:
+        GamePurchase.objects.get_or_create(
+            user=request.user,
+            game=game,
+            status=GamePurchase.Status.PAID,
+            defaults={
+                'order_reference': f'free-{request.user.pk}-{game.pk}',
+                'amount': 0,
+                'paid_at': timezone.now(),
+            },
+        )
+        messages.success(request, 'Гру додано до бібліотеки без оплати.')
+        return redirect('library')
     if GamePurchase.objects.filter(user=request.user, game=game, status=GamePurchase.Status.PAID).exists():
         messages.info(request, 'Ця гра вже є у вашій бібліотеці.')
         return redirect('library')
@@ -152,7 +163,7 @@ def buy_game(request, pk):
     order = GamePurchase.objects.create(
         user=request.user,
         game=game,
-        amount=game.price,
+        amount=purchase_price,
         order_reference=f'game-{game.pk}-{uuid.uuid4().hex}',
     )
     order_date = int(time.time())
@@ -326,7 +337,7 @@ def read_notification(request, pk):
 @require_POST
 def add_free_game(request, pk):
     game = get_object_or_404(games, pk=pk)
-    if game.price is not None and game.price > 0:
+    if game.current_price is not None and game.current_price > 0:
         messages.error(request, 'Цю гру потрібно придбати через оплату.')
         return redirect('home')
     GamePurchase.objects.get_or_create(
