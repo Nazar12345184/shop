@@ -2,7 +2,9 @@ from django import forms
 from django.contrib.auth.forms import UserCreationForm
 import re
 
-from .models import CatalogType, GameReview, GameSubmission, TelegramProfile
+from django.contrib.auth import get_user_model
+
+from .models import CatalogType, GameReview, GameSubmission, TelegramProfile, games
 
 
 class RegistrationForm(UserCreationForm):
@@ -101,3 +103,51 @@ class ProfileForm(forms.ModelForm):
         if TelegramProfile.objects.filter(telegram_username=username).exclude(pk=self.instance.pk).exists():
             raise forms.ValidationError('Цей Telegram нік уже прив’язаний до іншого акаунта.')
         return username
+
+
+class SiteGameAdminForm(forms.ModelForm):
+    discount_starts_at = forms.DateTimeField(
+        required=False,
+        input_formats=['%Y-%m-%dT%H:%M'],
+        widget=forms.DateTimeInput(attrs={'type': 'datetime-local'}, format='%Y-%m-%dT%H:%M'),
+    )
+    discount_ends_at = forms.DateTimeField(
+        required=False,
+        input_formats=['%Y-%m-%dT%H:%M'],
+        widget=forms.DateTimeInput(attrs={'type': 'datetime-local'}, format='%Y-%m-%dT%H:%M'),
+    )
+
+    class Meta:
+        model = games
+        fields = (
+            'name', 'kind', 'description', 'release_date', 'developer', 'genre',
+            'system_requirements', 'contact_telegram', 'link', 'photo', 'price',
+            'discount_percent', 'discount_starts_at', 'discount_ends_at',
+        )
+        labels = {
+            'discount_starts_at': 'Початок знижки (UTC)',
+            'discount_ends_at': 'Кінець знижки (UTC)',
+        }
+        help_texts = {
+            'discount_starts_at': 'Залиш порожнім, щоб знижка діяла одразу.',
+            'discount_ends_at': 'Залиш порожнім, щоб знижка не завершувалась автоматично.',
+        }
+        widgets = {
+            'description': forms.Textarea(attrs={'rows': 3}),
+            'system_requirements': forms.Textarea(attrs={'rows': 3}),
+            'release_date': forms.DateInput(attrs={'type': 'date'}),
+            'photo': forms.ClearableFileInput(attrs={'accept': 'image/*'}),
+            'price': forms.NumberInput(attrs={'min': '0', 'step': '0.01'}),
+            'discount_percent': forms.NumberInput(attrs={'min': '0', 'max': '100', 'step': '1'}),
+        }
+
+
+class SiteUserAccessForm(forms.ModelForm):
+    class Meta:
+        model = get_user_model()
+        fields = ('is_active', 'is_staff', 'is_superuser')
+        labels = {
+            'is_active': 'Активний',
+            'is_staff': 'Доступ до адмінки',
+            'is_superuser': 'Повні права',
+        }

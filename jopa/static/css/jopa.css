@@ -235,6 +235,30 @@ body { background: #111315; }
 .sale-price { color:#c7c7c7; }
 .discount-badge { display:inline-block; padding:3px 6px; border:1px solid #666; background:#353535; color:#f0f0f0; font-size:10px; font-weight:800; white-space:nowrap; }
 .game-stats del,.game-details del { color:#858a8e; font-size:11px; font-weight:400; }
+.site-manage { width:min(1200px,calc(100% - 32px)); margin:32px auto 70px; }
+.site-manage h1 { margin:4px 0 0; color:#e0e2e4; font-size:32px; }
+.site-manage h2 { margin:0; color:#dfe1e3; font-size:22px; }
+.manage-section { margin-top:20px; padding:18px; border:1px solid #34383e; background:#1b1e22; }
+.manage-grid { display:grid; grid-template-columns:minmax(220px, .8fr) minmax(0, 1.6fr); gap:16px; align-items:start; }
+.manage-game-list,.manage-form,.manage-user { padding:14px; border:1px solid #34383e; background:#202328; }
+.manage-game-list h3,.manage-form h3 { margin:0 0 12px; color:#dfe1e3; font-size:16px; }
+.manage-game-link { display:flex; flex-direction:column; gap:5px; padding:10px; border-top:1px solid #34383e; color:#d1d4d7; text-decoration:none; }
+.manage-game-link span,.manage-user > div span { color:#92989e; font-size:11px; }
+.manage-game-link:hover,.manage-game-link.selected { background:#2b3036; }
+.manage-form { min-width:0; }
+.manage-field { display:flex; flex-direction:column; gap:6px; margin:0 0 13px; color:#cbd0d3; font-size:12px; }
+.manage-field input,.manage-field select,.manage-field textarea { width:100%; padding:9px; border:1px solid #484e54; border-radius:0; background:#151719; color:#e1e3e5; font:inherit; }
+.manage-field input[type="checkbox"] { width:auto; }
+.manage-field small { color:#90979d; }
+.manage-secondary { display:inline-flex; align-items:center; padding:8px 11px; border:1px solid #454b51; color:#c7cbd0; font-size:12px; text-decoration:none; }
+.manage-secondary:hover { background:#30353a; }
+.manage-users { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:10px; }
+.manage-user > div { display:flex; flex-direction:column; gap:4px; margin-bottom:9px; color:#e0e2e4; }
+.user-access-form p { display:flex; align-items:center; gap:8px; margin:8px 0; color:#cbd0d3; font-size:12px; }
+.user-access-form p label { order:2; }
+.user-access-form p input { order:1; accent-color:#aeb4ba; }
+.user-access-form button { margin-top:6px; }
+@media(max-width:760px) { .manage-grid { grid-template-columns:1fr; } .site-manage { width:calc(100% - 20px); margin-top:20px; } .manage-section { padding:12px; } }
 @media(max-width:540px) { .catalog-search input[type="number"] { flex:1 1 100px; } .detail-heading { align-items:flex-start; gap:12px; } .detail-cover { flex-basis:90px; width:90px; height:90px; } .detail-panel,.reviews-section { padding:14px; } .review-head { flex-wrap:wrap; } }
 .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
 .stat-row { display:flex; justify-content:space-between; gap:10px; padding:9px 10px; color:#858c93; font-size:10px; }

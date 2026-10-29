@@ -12,6 +12,7 @@ from urllib.request import Request, urlopen
 from django.conf import settings
 from django.contrib.auth import get_user_model, login
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import user_passes_test
 from django.contrib import messages
 from django.db.models import Avg, Count, Q
 from django.http import HttpResponse, JsonResponse
@@ -22,7 +23,7 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
-from .forms import GameReviewForm, GameSubmissionForm, ProfileForm, RegistrationForm
+from .forms import GameReviewForm, GameSubmissionForm, ProfileForm, RegistrationForm, SiteGameAdminForm, SiteUserAccessForm
 from .models import CatalogType, Favorite, GamePurchase, GameReview, GameSubmission, SiteNotification, TelegramProfile, games
 
 logger = logging.getLogger(__name__)
@@ -331,6 +332,56 @@ def read_notification(request, pk):
         notification.read_at = timezone.now()
         notification.save(update_fields=('read_at',))
     return redirect('profile')
+
+
+@user_passes_test(lambda user: user.is_active and user.is_staff)
+def manage_site(request):
+    all_games = games.objects.order_by('name')
+    selected_id = request.GET.get('game_id') or request.POST.get('game_id')
+    selected_game = games.objects.filter(pk=selected_id).first() if selected_id else all_games.first()
+    game_form = SiteGameAdminForm(instance=selected_game)
+    access_overrides = {}
+
+    if request.method == 'POST' and request.POST.get('action') == 'save_game':
+        selected_game = get_object_or_404(games, pk=request.POST.get('game_id'))
+        game_form = SiteGameAdminForm(request.POST, request.FILES, instance=selected_game)
+        if game_form.is_valid():
+            saved_game = game_form.save()
+            messages.success(request, f'Зміни для «{saved_game.name}» збережено.')
+            return redirect(f'{reverse("manage_site")}?game_id={saved_game.pk}')
+
+    if request.method == 'POST' and request.POST.get('action') == 'save_user':
+        if not request.user.is_superuser:
+            return HttpResponse(status=403)
+        target_user = get_object_or_404(get_user_model(), pk=request.POST.get('user_id'))
+        access_form = SiteUserAccessForm(request.POST, instance=target_user)
+        if access_form.is_valid():
+            if access_form.cleaned_data['is_superuser'] and not access_form.cleaned_data['is_staff']:
+                access_form.add_error('is_staff', 'Суперкористувачу потрібен доступ до адмінки.')
+            elif target_user.pk == request.user.pk and not all((
+                access_form.cleaned_data['is_active'],
+                access_form.cleaned_data['is_staff'],
+                access_form.cleaned_data['is_superuser'],
+            )):
+                access_form.add_error(None, 'Не можна вимкнути власний доступ суперкористувача.')
+            else:
+                access_form.save()
+                messages.success(request, f'Права користувача {target_user.username} оновлено.')
+                return redirect(f'{reverse("manage_site")}?game_id={selected_id or ""}#users')
+        access_overrides[target_user.pk] = access_form
+
+    users = get_user_model().objects.order_by('username') if request.user.is_superuser else []
+    access_rows = [
+        (user, access_overrides.get(user.pk) or SiteUserAccessForm(instance=user))
+        for user in users
+    ]
+    return render(request, 'manage.html', {
+        'games': all_games,
+        'selected_game': selected_game,
+        'game_form': game_form,
+        'access_rows': access_rows,
+        'can_manage_users': request.user.is_superuser,
+    })
 
 
 @login_required
