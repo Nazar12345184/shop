@@ -77,6 +77,11 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+# Folder uploads arrive as one multipart request with one file per folder entry,
+# plus a small JSON field containing each file's relative path.
+DATA_UPLOAD_MAX_NUMBER_FILES = int(os.environ.get('DJANGO_DATA_UPLOAD_MAX_NUMBER_FILES', '2000'))
+DATA_UPLOAD_MAX_MEMORY_SIZE = int(os.environ.get('DJANGO_DATA_UPLOAD_MAX_MEMORY_SIZE', str(10 * 1024 * 1024)))
+
 ROOT_URLCONF = 'myproject.urls'
 
 TEMPLATES = [
