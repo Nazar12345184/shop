@@ -7,7 +7,7 @@ from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.admin import UserAdmin as DjangoUserAdmin
 from django.contrib.admin.sites import NotRegistered
-from .downloads import save_download_folder
+from .downloads import save_download_folder, save_folder_upload_chunks
 from .forms import SiteGameAdminForm
 from .models import Favorite, GamePurchase, GameReview, GameScreenshot, GameSubmission, SiteNotification, TelegramProfile, games
 
@@ -81,6 +81,9 @@ class GamesAdmin(admin.ModelAdmin):
             form.cleaned_data.get('download_folder'),
             request.POST.get('download_folder_paths', '[]'),
         )
+        upload_id = request.POST.get('folder_upload_id')
+        if upload_id:
+            save_folder_upload_chunks(obj, request.user, upload_id, request.POST.get('folder_upload_manifest', '[]'))
         write_game_json(obj)
 
 

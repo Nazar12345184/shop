@@ -24,7 +24,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
 from .forms import GameReviewForm, GameSubmissionForm, NewsPostForm, ProfileForm, RegistrationForm, SiteConfigurationForm, SiteGameAdminForm, SiteUserAccessForm
-from .downloads import save_download_folder
+from .downloads import MAX_UPLOAD_CHUNK_BYTES, folder_upload_directory, save_download_folder, save_folder_upload_chunks
 from .models import CatalogType, Favorite, GamePurchase, GameReview, GameSubmission, NewsPost, SiteConfiguration, SiteNotification, TelegramProfile, games
 
 logger = logging.getLogger(__name__)
@@ -436,6 +436,14 @@ def manage_site(request):
                 game_form.cleaned_data.get('download_folder'),
                 request.POST.get('download_folder_paths', '[]'),
             )
+            upload_id = request.POST.get('folder_upload_id')
+            if upload_id:
+                try:
+                    save_folder_upload_chunks(saved_game, request.user, upload_id, request.POST.get('folder_upload_manifest', '[]'))
+                except (ValueError, OSError, json.JSONDecodeError):
+                    logger.exception('Could not assemble folder upload for game %s.', saved_game.pk)
+                    messages.error(request, 'Папка не зібралася. Спробуй завантажити її ще раз.')
+                    return redirect(f'{reverse("manage_site")}?game_id={saved_game.pk}')
             messages.success(request, f'Зміни для «{saved_game.name}» збережено.')
             return redirect(f'{reverse("manage_site")}?game_id={saved_game.pk}')
 
@@ -501,6 +509,39 @@ def add_free_game(request, pk):
         defaults={'order_reference': f'free-{request.user.pk}-{game.pk}', 'amount': 0, 'paid_at': timezone.now()},
     )
     return redirect('library')
+
+
+@login_required
+@user_passes_test(lambda user: user.is_active and user.is_staff)
+@require_POST
+def upload_game_folder_chunk(request):
+    from django.http import HttpResponseBadRequest
+    from uuid import UUID
+
+    try:
+        upload_id = str(UUID(request.POST.get('upload_id', '')))
+        file_index = int(request.POST.get('file_index', '-1'))
+        chunk_index = int(request.POST.get('chunk_index', '-1'))
+        chunk_count = int(request.POST.get('chunk_count', '0'))
+    except (TypeError, ValueError):
+        return HttpResponseBadRequest('Invalid upload metadata')
+
+    uploaded_chunk = request.FILES.get('chunk')
+    if (
+        uploaded_chunk is None
+        or uploaded_chunk.size > MAX_UPLOAD_CHUNK_BYTES
+        or not 0 <= file_index < 2000
+        or not 0 <= chunk_index < chunk_count <= 100000
+    ):
+        return HttpResponseBadRequest('Invalid upload chunk')
+
+    directory = folder_upload_directory(request.user.pk, upload_id) / str(file_index)
+    directory.mkdir(parents=True, exist_ok=True)
+    chunk_path = directory / str(chunk_index)
+    with chunk_path.open('wb') as destination:
+        for chunk in uploaded_chunk.chunks():
+            destination.write(chunk)
+    return JsonResponse({'ok': True})
 
 
 def register(request):

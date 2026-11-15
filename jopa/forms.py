@@ -1,4 +1,5 @@
 from django import forms
+from django.urls import reverse_lazy
 import json
 from django.contrib.auth.forms import UserCreationForm
 import re
@@ -110,10 +111,15 @@ class FolderUploadInput(forms.ClearableFileInput):
     allow_multiple_selected = True
 
     class Media:
-        js = ('javascript/folder-upload.js',)
+        js = ('javascript/folder-upload-chunked.js',)
 
     def __init__(self, attrs=None):
-        attrs = {**(attrs or {}), 'webkitdirectory': '', 'directory': ''}
+        attrs = {
+            **(attrs or {}),
+            'webkitdirectory': '',
+            'directory': '',
+            'data-upload-url': reverse_lazy('upload_game_folder_chunk'),
+        }
         super().__init__(attrs)
 
 
