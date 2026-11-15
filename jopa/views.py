@@ -24,6 +24,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
 from .forms import GameReviewForm, GameSubmissionForm, NewsPostForm, ProfileForm, RegistrationForm, SiteConfigurationForm, SiteGameAdminForm, SiteUserAccessForm
+from .downloads import save_download_folder
 from .models import CatalogType, Favorite, GamePurchase, GameReview, GameSubmission, NewsPost, SiteConfiguration, SiteNotification, TelegramProfile, games
 
 logger = logging.getLogger(__name__)
@@ -430,6 +431,11 @@ def manage_site(request):
         game_form = SiteGameAdminForm(request.POST, request.FILES, instance=selected_game)
         if game_form.is_valid():
             saved_game = game_form.save()
+            save_download_folder(
+                saved_game,
+                game_form.cleaned_data.get('download_folder'),
+                request.POST.get('download_folder_paths', '[]'),
+            )
             messages.success(request, f'Зміни для «{saved_game.name}» збережено.')
             return redirect(f'{reverse("manage_site")}?game_id={saved_game.pk}')
 

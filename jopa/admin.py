@@ -7,6 +7,8 @@ from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.admin import UserAdmin as DjangoUserAdmin
 from django.contrib.admin.sites import NotRegistered
+from .downloads import save_download_folder
+from .forms import SiteGameAdminForm
 from .models import Favorite, GamePurchase, GameReview, GameScreenshot, GameSubmission, SiteNotification, TelegramProfile, games
 
 
@@ -65,6 +67,7 @@ class GameScreenshotInline(admin.TabularInline):
 
 @admin.register(games)
 class GamesAdmin(admin.ModelAdmin):
+    form = SiteGameAdminForm
     list_display = ('name', 'kind', 'genre', 'developer', 'release_date', 'price', 'discount_percent')
     search_fields = ('name', 'developer', 'genre')
     list_filter = ('kind', 'genre')
@@ -73,6 +76,11 @@ class GamesAdmin(admin.ModelAdmin):
 
     def save_model(self, request, obj, form, change):
         super().save_model(request, obj, form, change)
+        save_download_folder(
+            obj,
+            form.cleaned_data.get('download_folder'),
+            request.POST.get('download_folder_paths', '[]'),
+        )
         write_game_json(obj)
 
 

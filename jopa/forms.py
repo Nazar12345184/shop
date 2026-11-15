@@ -1,4 +1,5 @@
 from django import forms
+import json
 from django.contrib.auth.forms import UserCreationForm
 import re
 
@@ -105,7 +106,33 @@ class ProfileForm(forms.ModelForm):
         return username
 
 
+class FolderUploadInput(forms.ClearableFileInput):
+    allow_multiple_selected = True
+
+    class Media:
+        js = ('javascript/folder-upload.js',)
+
+    def __init__(self, attrs=None):
+        attrs = {**(attrs or {}), 'webkitdirectory': '', 'directory': ''}
+        super().__init__(attrs)
+
+
+class MultipleFileField(forms.FileField):
+    def clean(self, data, initial=None):
+        if not data:
+            return []
+        if not isinstance(data, (list, tuple)):
+            data = [data]
+        return [super(MultipleFileField, self).clean(file, initial) for file in data]
+
+
 class SiteGameAdminForm(forms.ModelForm):
+    download_folder = MultipleFileField(
+        label='Завантажити папку з грою',
+        required=False,
+        help_text='Вибери папку цілком. Вона буде запакована в ZIP зі збереженням структури.',
+        widget=FolderUploadInput(),
+    )
     discount_starts_at = forms.DateTimeField(
         required=False,
         input_formats=['%Y-%m-%dT%H:%M'],
@@ -121,7 +148,7 @@ class SiteGameAdminForm(forms.ModelForm):
         model = games
         fields = (
             'name', 'kind', 'description', 'release_date', 'developer', 'genre',
-            'system_requirements', 'contact_telegram', 'link', 'photo', 'download_file', 'price',
+            'system_requirements', 'contact_telegram', 'link', 'photo', 'download_file', 'download_folder', 'price',
             'discount_percent', 'discount_starts_at', 'discount_ends_at',
         )
         labels = {
