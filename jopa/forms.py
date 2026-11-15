@@ -121,7 +121,7 @@ class SiteGameAdminForm(forms.ModelForm):
         model = games
         fields = (
             'name', 'kind', 'description', 'release_date', 'developer', 'genre',
-            'system_requirements', 'contact_telegram', 'link', 'photo', 'price',
+            'system_requirements', 'contact_telegram', 'link', 'photo', 'download_file', 'price',
             'discount_percent', 'discount_starts_at', 'discount_ends_at',
         )
         labels = {
@@ -137,6 +137,7 @@ class SiteGameAdminForm(forms.ModelForm):
             'system_requirements': forms.Textarea(attrs={'rows': 3}),
             'release_date': forms.DateInput(attrs={'type': 'date'}),
             'photo': forms.ClearableFileInput(attrs={'accept': 'image/*'}),
+            'download_file': forms.ClearableFileInput(),
             'price': forms.NumberInput(attrs={'min': '0', 'step': '0.01'}),
             'discount_percent': forms.NumberInput(attrs={'min': '0', 'max': '100', 'step': '1'}),
         }

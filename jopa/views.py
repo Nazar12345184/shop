@@ -15,7 +15,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib import messages
 from django.db.models import Avg, Count, Q, Sum
-from django.http import HttpResponse, JsonResponse
+from django.http import FileResponse, Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
@@ -255,6 +255,27 @@ def library(request):
     purchases = GamePurchase.objects.filter(user=request.user, status=GamePurchase.Status.PAID).select_related('game')
     favorites = Favorite.objects.filter(user=request.user).select_related('game')
     return render(request, 'library.html', {'purchases': purchases, 'favorites': favorites})
+
+
+@login_required
+def download_game_file(request, pk):
+    purchase = get_object_or_404(
+        GamePurchase.objects.select_related('game'),
+        user=request.user,
+        game_id=pk,
+        status=GamePurchase.Status.PAID,
+    )
+    if not purchase.game.download_file:
+        raise Http404
+    try:
+        file_handle = purchase.game.download_file.open('rb')
+    except FileNotFoundError as exc:
+        raise Http404 from exc
+    return FileResponse(
+        file_handle,
+        as_attachment=True,
+        filename=purchase.game.download_file.name.rsplit('/', 1)[-1],
+    )
 
 
 @login_required

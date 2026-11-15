@@ -2,8 +2,20 @@ from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator, RegexValidator
 from django.core.exceptions import ValidationError
 from django.conf import settings
+from django.core.files.storage import FileSystemStorage
+from django.utils.deconstruct import deconstructible
 from django.utils import timezone
 from decimal import Decimal, ROUND_HALF_UP
+
+
+@deconstructible
+class PrivateGameFileStorage(FileSystemStorage):
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault('location', settings.BASE_DIR / 'private_media')
+        super().__init__(*args, **kwargs)
+
+
+private_game_file_storage = PrivateGameFileStorage()
 
 
 class CatalogType(models.TextChoices):
@@ -30,6 +42,13 @@ class games(models.Model):
         related_name='published_games',
     )
     photo = models.ImageField(upload_to='static/img/', blank=True, null=True)
+    download_file = models.FileField(
+        'Файл для покупців',
+        upload_to='game_files/',
+        storage=private_game_file_storage,
+        blank=True,
+        help_text='Файл стане доступним у бібліотеці лише користувачам, які придбали гру.',
+    )
     link = models.URLField(blank=True)
     price = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
     discount_percent = models.PositiveSmallIntegerField(
