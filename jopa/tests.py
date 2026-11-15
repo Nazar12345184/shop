@@ -1,12 +1,16 @@
 import json
+import uuid
+import zipfile
+from io import BytesIO
 from unittest.mock import MagicMock, patch
 
 from django.test import TestCase
 from django.test import override_settings
 from django.contrib.auth import get_user_model
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.urls import reverse
 
-from .models import GamePurchase, games
+from .models import GamePurchase, GameSubmission, games
 
 
 class HomeViewTests(TestCase):
@@ -80,3 +84,56 @@ class PurchasedGameViewTests(TestCase):
             payload['returnUrl'],
             f'https://shop.example{reverse("purchased_game", args=(self.game.pk,))}?order_reference={purchase.order_reference}',
         )
+
+
+class GameSubmissionUploadTests(TestCase):
+    def submission_data(self):
+        return {
+            'submitter_name': 'Game creator',
+            'submitter_telegram': '@tester_123',
+            'kind': 'game',
+            'name': 'Uploaded game',
+            'description': 'A game with an upload',
+        }
+
+    def test_submission_accepts_a_game_file(self):
+        data = self.submission_data()
+        data['download_file'] = SimpleUploadedFile('game.zip', b'game data')
+
+        response = self.client.post(reverse('submit_game'), data)
+
+        self.assertRedirects(response, reverse('submit_game'))
+        submission = GameSubmission.objects.get(name='Uploaded game')
+        self.assertTrue(submission.download_file.name.startswith('submissions/files/'))
+
+    def test_anonymous_submission_accepts_a_folder_upload(self):
+        upload_id = str(uuid.uuid4())
+        response = self.client.post(reverse('upload_game_folder_chunk'), {
+            'upload_id': upload_id,
+            'file_index': '0',
+            'chunk_index': '0',
+            'chunk_count': '1',
+            'chunk': SimpleUploadedFile('chunk.bin', b'game data'),
+        })
+        self.assertEqual(response.status_code, 200)
+
+        data = self.submission_data()
+        data['folder_upload_id'] = upload_id
+        data['folder_upload_manifest'] = json.dumps([{'path': 'game/readme.txt', 'chunks': 1}])
+        response = self.client.post(reverse('submit_game'), data)
+
+        self.assertRedirects(response, reverse('submit_game'))
+        submission = GameSubmission.objects.get(name='Uploaded game')
+        with submission.download_file.open('rb') as uploaded_file:
+            with zipfile.ZipFile(BytesIO(uploaded_file.read())) as archive:
+                self.assertEqual(archive.read('game/readme.txt'), b'game data')
+
+    def test_submission_rejects_both_file_and_folder(self):
+        data = self.submission_data()
+        data['download_file'] = SimpleUploadedFile('game.zip', b'game data')
+        data['folder_upload_id'] = str(uuid.uuid4())
+
+        response = self.client.post(reverse('submit_game'), data)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(GameSubmission.objects.exists())

@@ -113,6 +113,7 @@ class GameSubmissionAdmin(admin.ModelAdmin):
                 contact_telegram=submission.submitter_telegram,
                 author=submission.submitter_user,
                 photo=submission.photo.name if submission.photo else None,
+                download_file=submission.download_file.name if submission.download_file else '',
                 link=submission.link,
                 price=submission.price,
             )

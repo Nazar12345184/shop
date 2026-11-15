@@ -19,7 +19,7 @@ def folder_upload_directory(user_id, upload_id):
 
 
 def save_folder_upload_chunks(game, user, upload_id, manifest_json):
-    directory = folder_upload_directory(user.pk, upload_id)
+    directory = folder_upload_directory(getattr(user, 'pk', user), upload_id)
     manifest = json.loads(manifest_json)
     if not isinstance(manifest, list) or not manifest or len(manifest) > 2000:
         raise ValueError('Порожня або завелика папка.')

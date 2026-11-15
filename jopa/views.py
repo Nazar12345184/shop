@@ -530,13 +530,12 @@ def add_free_game(request, pk):
     return redirect('purchased_game', pk=game.pk)
 
 
-@login_required
-@user_passes_test(lambda user: user.is_active and user.is_staff)
 @require_POST
 def upload_game_folder_chunk(request):
     from django.http import HttpResponseBadRequest
     from uuid import UUID
 
+    upload_owner = _folder_upload_owner(request)
     try:
         upload_id = str(UUID(request.POST.get('upload_id', '')))
         file_index = int(request.POST.get('file_index', '-1'))
@@ -554,13 +553,21 @@ def upload_game_folder_chunk(request):
     ):
         return HttpResponseBadRequest('Invalid upload chunk')
 
-    directory = folder_upload_directory(request.user.pk, upload_id) / str(file_index)
+    directory = folder_upload_directory(upload_owner, upload_id) / str(file_index)
     directory.mkdir(parents=True, exist_ok=True)
     chunk_path = directory / str(chunk_index)
     with chunk_path.open('wb') as destination:
         for chunk in uploaded_chunk.chunks():
             destination.write(chunk)
     return JsonResponse({'ok': True})
+
+
+def _folder_upload_owner(request):
+    if request.user.is_authenticated:
+        return request.user.pk
+    if not request.session.session_key:
+        request.session.create()
+    return f'session-{request.session.session_key}'
 
 
 def register(request):
@@ -636,6 +643,27 @@ def submit_game(request):
         form = GameSubmissionForm(request.POST, request.FILES)
         if form.is_valid():
             submission = form.save()
+            download_folder = form.cleaned_data.get('download_folder')
+            upload_id = request.POST.get('folder_upload_id')
+            if download_folder:
+                save_download_folder(
+                    submission,
+                    download_folder,
+                    request.POST.get('download_folder_paths', '[]'),
+                )
+            elif upload_id:
+                try:
+                    save_folder_upload_chunks(
+                        submission,
+                        _folder_upload_owner(request),
+                        upload_id,
+                        request.POST.get('folder_upload_manifest', '[]'),
+                    )
+                except (ValueError, OSError, json.JSONDecodeError):
+                    logger.exception('Could not assemble folder upload for submission %s.', submission.pk)
+                    submission.delete()
+                    messages.error(request, 'Папка не зібралася. Спробуй завантажити її ще раз.')
+                    return render(request, 'submit_game.html', {'form': form})
             if request.user.is_authenticated:
                 submission.submitter_user = request.user
                 submission.save(update_fields=('submitter_user',))

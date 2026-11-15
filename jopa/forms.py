@@ -39,7 +39,39 @@ class RegistrationForm(UserCreationForm):
         return user
 
 
+class FolderUploadInput(forms.ClearableFileInput):
+    allow_multiple_selected = True
+
+    class Media:
+        js = ('javascript/folder-upload-chunked.js',)
+
+    def __init__(self, attrs=None):
+        attrs = {
+            **(attrs or {}),
+            'webkitdirectory': '',
+            'directory': '',
+            'data-upload-url': reverse_lazy('upload_game_folder_chunk'),
+        }
+        super().__init__(attrs)
+
+
+class MultipleFileField(forms.FileField):
+    def clean(self, data, initial=None):
+        if not data:
+            return []
+        if not isinstance(data, (list, tuple)):
+            data = [data]
+        return [super(MultipleFileField, self).clean(file, initial) for file in data]
+
+
 class GameSubmissionForm(forms.ModelForm):
+    download_folder = MultipleFileField(
+        label='Або завантажити папку з грою',
+        required=False,
+        help_text='Обери папку цілком. Вона буде запакована в ZIP.',
+        widget=FolderUploadInput(),
+    )
+
     kind = forms.ChoiceField(
         label='Що пропонуєш?',
         choices=CatalogType.choices,
@@ -59,16 +91,27 @@ class GameSubmissionForm(forms.ModelForm):
             'genre',
             'system_requirements',
             'photo',
+            'download_file',
             'link',
             'price',
+            'download_folder',
         )
         widgets = {
             'description': forms.Textarea(attrs={'rows': 4}),
             'system_requirements': forms.Textarea(attrs={'rows': 4}),
             'release_date': forms.DateInput(attrs={'type': 'date'}),
             'photo': forms.ClearableFileInput(attrs={'accept': 'image/*'}),
+            'download_file': forms.ClearableFileInput(),
             'price': forms.NumberInput(attrs={'min': '0', 'step': '0.01'}),
         }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        if cleaned_data.get('download_file') and (
+            cleaned_data.get('download_folder') or self.data.get('folder_upload_id')
+        ):
+            self.add_error('download_file', 'Завантаж лише файл або папку, не обидва варіанти.')
+        return cleaned_data
 
     def clean_submitter_telegram(self):
         username = self.cleaned_data['submitter_telegram'].strip().lstrip('@')
@@ -105,31 +148,6 @@ class ProfileForm(forms.ModelForm):
         if TelegramProfile.objects.filter(telegram_username=username).exclude(pk=self.instance.pk).exists():
             raise forms.ValidationError('Цей Telegram нік уже прив’язаний до іншого акаунта.')
         return username
-
-
-class FolderUploadInput(forms.ClearableFileInput):
-    allow_multiple_selected = True
-
-    class Media:
-        js = ('javascript/folder-upload-chunked.js',)
-
-    def __init__(self, attrs=None):
-        attrs = {
-            **(attrs or {}),
-            'webkitdirectory': '',
-            'directory': '',
-            'data-upload-url': reverse_lazy('upload_game_folder_chunk'),
-        }
-        super().__init__(attrs)
-
-
-class MultipleFileField(forms.FileField):
-    def clean(self, data, initial=None):
-        if not data:
-            return []
-        if not isinstance(data, (list, tuple)):
-            data = [data]
-        return [super(MultipleFileField, self).clean(file, initial) for file in data]
 
 
 class SiteGameAdminForm(forms.ModelForm):

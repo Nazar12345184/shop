@@ -117,6 +117,13 @@ class GameSubmission(models.Model):
     genre = models.CharField('Жанр', max_length=80, blank=True)
     system_requirements = models.TextField('Системні вимоги', blank=True)
     photo = models.ImageField(upload_to='submissions/covers/', blank=True, null=True)
+    download_file = models.FileField(
+        'Файл гри',
+        upload_to='submissions/files/',
+        storage=private_game_file_storage,
+        blank=True,
+        help_text='Файл стане доступним покупцям лише після схвалення пропозиції.',
+    )
     link = models.URLField('Посилання на гру', blank=True)
     price = models.DecimalField('Ціна', max_digits=10, decimal_places=2, blank=True, null=True)
     status = models.CharField(max_length=10, choices=Status.choices, default=Status.PENDING)
