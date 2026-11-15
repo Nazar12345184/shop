@@ -315,10 +315,16 @@ body { --bg:var(--site-bg,#111315); --surface:var(--site-panel,#1b1e22); --text:
 .library-cover { width:60px; height:60px; object-fit:cover; border:1px solid #383d43; }
 .library-game-info { display:grid; flex:1; gap:5px; min-width:0; }
 .library-game-info strong { color:#e0e2e4; font-size:14px; }
+.library-game-link { color:inherit; text-decoration:none; }
+.library-game-link:hover { color:var(--site-accent,#aeb4ba); text-decoration:underline; }
 .library-game-info span { overflow:hidden; color:#9da3a9; font-size:11px; text-overflow:ellipsis; white-space:nowrap; }
 .library-owned { padding:6px 8px; border:1px solid #454b51; color:#bcc1c5; font-size:10px; }
 .library-empty { padding:22px; border:1px solid #34383e; background:#1c1f23; color:#9da3a9; font-size:13px; }
 .library-play { margin:0; white-space:nowrap; }
+.purchase-state { display:inline-block; margin:0 0 10px; padding:6px 9px; border:1px solid #53614c; color:#b8c6ae; font-size:10px; font-weight:800; letter-spacing:.08em; }
+.purchase-state.is-pending { border-color:#6a6048; color:#d1c39b; }
+.purchased-actions { display:flex; flex-wrap:wrap; gap:10px; margin-top:18px; }
+.purchased-actions .game-action { margin:0; }
 .purchase-form { width:100%; margin-top:10px; }
 .purchase-form .game-action { width:100%; justify-content:space-between; cursor:pointer; font-family:inherit; }
 .game-details-link { display:inline-block; margin-top:10px; color:#9ea4aa; font-size:10px; text-decoration:underline; }

@@ -154,10 +154,10 @@ def buy_game(request, pk):
             },
         )
         messages.success(request, 'Гру додано до бібліотеки без оплати.')
-        return redirect('library')
+        return redirect('purchased_game', pk=game.pk)
     if GamePurchase.objects.filter(user=request.user, game=game, status=GamePurchase.Status.PAID).exists():
         messages.info(request, 'Ця гра вже є у вашій бібліотеці.')
-        return redirect('library')
+        return redirect('purchased_game', pk=game.pk)
     required = (settings.SITE_URL, settings.WAYFORPAY_MERCHANT_ACCOUNT, settings.WAYFORPAY_SECRET_KEY, settings.WAYFORPAY_MERCHANT_DOMAIN)
     if not all(required):
         messages.error(request, 'Оплата ще не налаштована. Потрібні облікові дані WayForPay та публічна адреса сайту в .env.')
@@ -185,6 +185,10 @@ def buy_game(request, pk):
         'apiVersion': 1,
         'language': 'UA',
         'serviceUrl': f'{settings.SITE_URL}{reverse("wayforpay_callback")}',
+        'returnUrl': (
+            f'{settings.SITE_URL}{reverse("purchased_game", args=(game.pk,))}?'
+            f'{urlencode({"order_reference": order.order_reference})}'
+        ),
         'orderReference': order.order_reference,
         'orderDate': order_date,
         'amount': f'{order.amount:.2f}',
@@ -256,6 +260,21 @@ def library(request):
     purchases = GamePurchase.objects.filter(user=request.user, status=GamePurchase.Status.PAID).select_related('game')
     favorites = Favorite.objects.filter(user=request.user).select_related('game')
     return render(request, 'library.html', {'purchases': purchases, 'favorites': favorites})
+
+
+@login_required
+def purchased_game(request, pk):
+    purchases = GamePurchase.objects.filter(user=request.user, game_id=pk).select_related('game')
+    order_reference = request.GET.get('order_reference', '')
+    if order_reference:
+        purchase = get_object_or_404(purchases, order_reference=order_reference)
+    else:
+        purchase = get_object_or_404(purchases, status=GamePurchase.Status.PAID)
+    return render(request, 'purchased_game.html', {
+        'purchase': purchase,
+        'game': purchase.game,
+        'payment_pending': purchase.status != GamePurchase.Status.PAID,
+    })
 
 
 @login_required
@@ -508,7 +527,7 @@ def add_free_game(request, pk):
         status=GamePurchase.Status.PAID,
         defaults={'order_reference': f'free-{request.user.pk}-{game.pk}', 'amount': 0, 'paid_at': timezone.now()},
     )
-    return redirect('library')
+    return redirect('purchased_game', pk=game.pk)
 
 
 @login_required
