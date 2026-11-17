@@ -651,20 +651,23 @@ def game_detail(request, pk):
     review = None
     is_favorite = False
     is_owned = False
+    is_author = False
     if request.user.is_authenticated:
         review = GameReview.objects.filter(user=request.user, game=game).first()
         is_favorite = Favorite.objects.filter(user=request.user, game=game).exists()
+        is_author = game.author_id == request.user.pk
         is_owned = GamePurchase.objects.filter(
             user=request.user,
             game=game,
             status=GamePurchase.Status.PAID,
-        ).exists() or game.author_id == request.user.pk
+        ).exists() or is_author
     return render(request, 'game_detail.html', {
         'game': game,
         'reviews': game.reviews.select_related('user').all(),
         'review_form': GameReviewForm(instance=review),
         'is_favorite': is_favorite,
         'is_owned': is_owned,
+        'is_author': is_author,
     })
 
 
