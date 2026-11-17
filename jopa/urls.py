@@ -1,5 +1,5 @@
 from django.urls import include, path
-from .views import add_free_game, author_detail, buy_game, download_game_file, game_detail, home, library, manage_site, profile, purchased_game, read_notification, register, submit_game, submit_review, toggle_favorite, upload_game_folder_chunk, wayforpay_callback
+from .views import add_free_game, author_detail, author_list, buy_game, download_game_file, game_detail, home, library, manage_site, profile, purchased_game, read_notification, register, submit_game, submit_review, toggle_favorite, upload_game_folder_chunk, wayforpay_callback
 
 urlpatterns = [
     path('', home, name='home'),
@@ -14,6 +14,7 @@ urlpatterns = [
     path('profile/', profile, name='profile'),
     path('manage/', manage_site, name='manage_site'),
     path('manage/upload-folder-chunk/', upload_game_folder_chunk, name='upload_game_folder_chunk'),
+    path('authors/', author_list, name='author_list'),
     path('author/<int:pk>/', author_detail, name='author_detail'),
     path('notifications/<int:pk>/read/', read_notification, name='read_notification'),
     path('favorite/<int:pk>/toggle/', toggle_favorite, name='toggle_favorite'),

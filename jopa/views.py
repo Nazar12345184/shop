@@ -342,15 +342,33 @@ def profile(request):
     submissions = GameSubmission.objects.filter(submitter_user=request.user)
     purchases = GamePurchase.objects.filter(user=request.user).select_related('game')
     notifications = SiteNotification.objects.filter(user=request.user)
+    published_games = games.objects.filter(author=request.user).order_by('-pk')
     return render(request, 'profile.html', {
         'form': form,
         'submissions': submissions,
         'purchases': purchases,
+        'published_games': published_games,
         'favorites_count': Favorite.objects.filter(user=request.user).count(),
         'reviews_count': GameReview.objects.filter(user=request.user).count(),
         'notifications': notifications,
         'unread_notifications': notifications.filter(read_at__isnull=True).count(),
     })
+
+
+def author_list(request):
+    query = request.GET.get('q', '').strip()[:100]
+    authors = get_user_model().objects.filter(published_games__isnull=False).distinct().annotate(
+        project_count=Count('published_games', distinct=True),
+        average_rating=Avg('published_games__reviews__rating'),
+    )
+    if query:
+        authors = authors.filter(
+            Q(username__icontains=query)
+            | Q(first_name__icontains=query)
+            | Q(last_name__icontains=query)
+        )
+    authors = authors.order_by('-project_count', 'username')
+    return render(request, 'authors.html', {'authors': authors, 'query': query})
 
 
 def author_detail(request, pk):

@@ -131,6 +131,24 @@ class GameReviewForm(forms.ModelForm):
 
 
 class ProfileForm(forms.ModelForm):
+    first_name = forms.CharField(
+        label='Ім’я',
+        required=False,
+        max_length=150,
+        widget=forms.TextInput(attrs={'placeholder': 'Ваше ім’я', 'autocomplete': 'given-name'}),
+    )
+    last_name = forms.CharField(
+        label='Прізвище',
+        required=False,
+        max_length=150,
+        widget=forms.TextInput(attrs={'placeholder': 'Ваше прізвище', 'autocomplete': 'family-name'}),
+    )
+    email = forms.EmailField(
+        label='Email',
+        required=False,
+        widget=forms.EmailInput(attrs={'placeholder': 'name@example.com', 'autocomplete': 'email'}),
+    )
+
     class Meta:
         model = TelegramProfile
         fields = ('telegram_username',)
@@ -140,6 +158,20 @@ class ProfileForm(forms.ModelForm):
     def __init__(self, *args, user=None, **kwargs):
         self.user = user
         super().__init__(*args, **kwargs)
+        if user:
+            self.fields['first_name'].initial = user.first_name
+            self.fields['last_name'].initial = user.last_name
+            self.fields['email'].initial = user.email
+
+    def save(self, commit=True):
+        profile = super().save(commit=commit)
+        if self.user:
+            self.user.first_name = self.cleaned_data['first_name'].strip()
+            self.user.last_name = self.cleaned_data['last_name'].strip()
+            self.user.email = self.cleaned_data['email'].strip()
+            if commit:
+                self.user.save(update_fields=('first_name', 'last_name', 'email'))
+        return profile
 
     def clean_telegram_username(self):
         username = self.cleaned_data['telegram_username'].strip().lstrip('@').lower()

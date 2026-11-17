@@ -21,6 +21,48 @@ class HomeViewTests(TestCase):
         self.assertTemplateUsed(response, 'index.html')
 
 
+class AuthorAndProfileTests(TestCase):
+    def setUp(self):
+        self.author = get_user_model().objects.create_user(
+            username='creator',
+            password='test-password',
+            first_name='Іван',
+            last_name='Тест',
+        )
+        self.game = games.objects.create(
+            name='Author game',
+            description='A test project',
+            author=self.author,
+        )
+
+    def test_author_list_and_detail_render(self):
+        list_response = self.client.get(reverse('author_list'))
+        detail_response = self.client.get(reverse('author_detail', args=(self.author.pk,)))
+
+        self.assertEqual(list_response.status_code, 200)
+        self.assertContains(list_response, 'Іван Тест')
+        self.assertTemplateUsed(list_response, 'authors.html')
+        self.assertEqual(detail_response.status_code, 200)
+        self.assertContains(detail_response, 'Author game')
+
+    def test_profile_updates_user_and_telegram_data(self):
+        self.client.force_login(self.author)
+
+        response = self.client.post(reverse('profile'), {
+            'first_name': 'Новий',
+            'last_name': 'Автор',
+            'email': 'author@example.com',
+            'telegram_username': '@new_creator',
+        })
+
+        self.assertRedirects(response, reverse('profile'))
+        self.author.refresh_from_db()
+        self.assertEqual(self.author.first_name, 'Новий')
+        self.assertEqual(self.author.last_name, 'Автор')
+        self.assertEqual(self.author.email, 'author@example.com')
+        self.assertEqual(self.author.telegram_profile.telegram_username, 'new_creator')
+
+
 class PurchasedGameViewTests(TestCase):
     def setUp(self):
         self.user = get_user_model().objects.create_user(username='buyer', password='test-password')
