@@ -346,8 +346,12 @@ def profile(request):
     ).select_related('game')
     notifications = SiteNotification.objects.filter(user=request.user)
     published_games = games.objects.filter(author=request.user).order_by('-pk')
+    active_tab = request.GET.get('tab', 'profile')
+    if active_tab not in {'profile', 'projects', 'submissions', 'purchases', 'notifications'}:
+        active_tab = 'profile'
     return render(request, 'profile.html', {
         'form': form,
+        'active_tab': active_tab,
         'submissions': submissions,
         'purchases': purchases,
         'published_games': published_games,
@@ -620,14 +624,21 @@ def game_detail(request, pk):
     )
     review = None
     is_favorite = False
+    is_owned = False
     if request.user.is_authenticated:
         review = GameReview.objects.filter(user=request.user, game=game).first()
         is_favorite = Favorite.objects.filter(user=request.user, game=game).exists()
+        is_owned = GamePurchase.objects.filter(
+            user=request.user,
+            game=game,
+            status=GamePurchase.Status.PAID,
+        ).exists()
     return render(request, 'game_detail.html', {
         'game': game,
         'reviews': game.reviews.select_related('user').all(),
         'review_form': GameReviewForm(instance=review),
         'is_favorite': is_favorite,
+        'is_owned': is_owned,
     })
 
 

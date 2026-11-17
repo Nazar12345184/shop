@@ -98,6 +98,27 @@ class PurchasedGameViewTests(TestCase):
         self.assertRedirects(response, reverse('purchased_game', args=(self.game.pk,)))
         self.assertContains(self.client.get(reverse('purchased_game', args=(self.game.pk,))), 'ГРУ ДОДАНО ДО ТВОЄЇ БІБЛІОТЕКИ')
 
+    def test_owned_game_shows_download_on_catalog_and_detail(self):
+        self.game.download_file.save(
+            'owned-game.zip',
+            SimpleUploadedFile('owned-game.zip', b'game archive'),
+        )
+        GamePurchase.objects.create(
+            user=self.user,
+            game=self.game,
+            order_reference='owned-direct-download',
+            amount='0.00',
+            status=GamePurchase.Status.PAID,
+        )
+        self.client.force_login(self.user)
+
+        catalog = self.client.get(reverse('home'))
+        detail = self.client.get(reverse('game_detail', args=(self.game.pk,)))
+
+        download_url = reverse('download_game_file', args=(self.game.pk,))
+        self.assertContains(catalog, download_url)
+        self.assertContains(detail, download_url)
+
     def test_pending_payment_return_shows_refreshable_status(self):
         purchase = GamePurchase.objects.create(
             user=self.user,

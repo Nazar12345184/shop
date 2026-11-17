@@ -33,6 +33,15 @@
         </div>
     </section>
 
+    <nav class="profile-tabs" aria-label="Розділи профілю">
+        <a href="{% url 'profile' %}?tab=profile"{% if active_tab == 'profile' %} class="active" aria-current="page"{% endif %}>Профіль</a>
+        <a href="{% url 'profile' %}?tab=projects"{% if active_tab == 'projects' %} class="active" aria-current="page"{% endif %}>Мої проєкти <span>{{ published_games|length }}</span></a>
+        <a href="{% url 'profile' %}?tab=submissions"{% if active_tab == 'submissions' %} class="active" aria-current="page"{% endif %}>Заявки <span>{{ submissions|length }}</span></a>
+        <a href="{% url 'profile' %}?tab=purchases"{% if active_tab == 'purchases' %} class="active" aria-current="page"{% endif %}>Покупки <span>{{ purchases|length }}</span></a>
+        <a href="{% url 'profile' %}?tab=notifications"{% if active_tab == 'notifications' %} class="active" aria-current="page"{% endif %}>Сповіщення{% if unread_notifications %} <span>{{ unread_notifications }}</span>{% endif %}</a>
+    </nav>
+
+    {% if active_tab == 'profile' %}
     <div class="profile-layout">
         <form method="post" class="submission-form account-form profile-form profile-edit-card">
             {% csrf_token %}
@@ -75,7 +84,24 @@
             </section>
         </aside>
     </div>
+    {% endif %}
 
+    {% if active_tab == 'projects' %}
+    <section class="profile-section">
+        <div class="section-heading"><div><p class="side-kicker">ПУБЛІКАЦІЇ</p><h2>Мої проєкти</h2></div><span class="collection-count">{{ published_games|length }}</span></div>
+        <div class="library-items">
+            {% for game in published_games %}
+            <article class="library-item">
+                {% if game.photo %}<img class="library-cover" src="{{ game.photo.url }}" alt="{{ game.name }}">{% else %}<span class="library-cover library-cover-placeholder">G</span>{% endif %}
+                <div class="library-game-info"><strong><a class="library-game-link" href="{% url 'game_detail' game.pk %}">{{ game.name }}</a></strong><span>{{ game.get_kind_display }} · {{ game.description|truncatechars:100 }}</span></div>
+                <a class="game-action library-play" href="{% url 'author_detail' request.user.pk %}">Сторінка автора <span>→</span></a>
+            </article>
+            {% empty %}<p class="library-empty">Опублікованих проєктів поки немає.</p>{% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+    {% if active_tab == 'submissions' %}
     <section class="profile-section">
         <div class="section-heading"><div><p class="side-kicker">АКТИВНІСТЬ</p><h2>Запропоновані проєкти</h2></div><span class="collection-count">{{ submissions|length }}</span></div>
         <div class="library-items">
@@ -87,7 +113,9 @@
             {% empty %}<p class="library-empty">Ти ще не надсилав пропозицій.</p>{% endfor %}
         </div>
     </section>
+    {% endif %}
 
+    {% if active_tab == 'purchases' %}
     <section class="profile-section">
         <div class="section-heading"><div><p class="side-kicker">ІСТОРІЯ</p><h2>Покупки</h2></div><span class="collection-count">{{ purchases|length }}</span></div>
         <div class="library-items">
@@ -95,11 +123,27 @@
             <article class="library-item purchase-complete">
                 {% if purchase.game.photo %}<img class="library-cover" src="{{ purchase.game.photo.url }}" alt="{{ purchase.game.name }}">{% else %}<span class="library-cover library-cover-placeholder">G</span>{% endif %}
                 <div class="library-game-info"><strong><a class="library-game-link" href="{% url 'game_detail' purchase.game.pk %}">{{ purchase.game.name }}</a></strong><span>Завершено {% if purchase.paid_at %}{{ purchase.paid_at|date:"d.m.Y H:i" }}{% else %}{{ purchase.created_at|date:"d.m.Y H:i" }}{% endif %}</span></div>
-                <span class="status-pill status-approved">Оплачено</span><strong>{{ purchase.amount|floatformat:2 }} ₴</strong>
+                <span class="status-pill status-approved">Оплачено</span>
+                {% if purchase.game.download_file %}<a class="game-action library-play" href="{% url 'download_game_file' purchase.game.pk %}">Скачати <span>↓</span></a>{% else %}<strong>{{ purchase.amount|floatformat:2 }} ₴</strong>{% endif %}
             </article>
             {% empty %}<p class="library-empty">Завершених покупок поки немає.</p>{% endfor %}
         </div>
     </section>
+    {% endif %}
+
+    {% if active_tab == 'notifications' %}
+    <section class="profile-section">
+        <div class="section-heading"><div><p class="side-kicker">ОНОВЛЕННЯ</p><h2>Сповіщення</h2></div><span class="collection-count">{{ unread_notifications }} нових</span></div>
+        <div class="library-items">
+            {% for notification in notifications %}
+            <article class="library-item notification-item{% if not notification.read_at %} notification-unread{% endif %}">
+                <div class="library-game-info"><strong>{{ notification.message }}</strong><span>{{ notification.created_at|date:"d.m.Y H:i" }}{% if notification.submission %} · заявка «{{ notification.submission.name }}»{% endif %}</span>{% if notification.submission.published_game %}<a href="{% url 'game_detail' notification.submission.published_game.pk %}">Перейти до опублікованого проєкту →</a>{% endif %}</div>
+                {% if not notification.read_at %}<form method="post" action="{% url 'read_notification' notification.pk %}">{% csrf_token %}<button class="favorite-button" type="submit">Прочитано</button></form>{% endif %}
+            </article>
+            {% empty %}<p class="library-empty">Сповіщень поки немає.</p>{% endfor %}
+        </div>
+    </section>
+    {% endif %}
 </main>
 </body>
 </html>
