@@ -91,6 +91,7 @@ def home(request):
     favorite_ids = set()
     if request.user.is_authenticated:
         owned_ids = set(GamePurchase.objects.filter(user=request.user, status=GamePurchase.Status.PAID).values_list('game_id', flat=True))
+        owned_ids.update(games.objects.filter(author=request.user).values_list('pk', flat=True))
         favorite_ids = set(Favorite.objects.filter(user=request.user).values_list('game_id', flat=True))
     return render(request, 'index.html', {
         'games': games_list,
@@ -141,6 +142,11 @@ def notify_purchase_in_telegram(purchase):
 @require_POST
 def buy_game(request, pk):
     game = get_object_or_404(games, pk=pk)
+    if game.author_id == request.user.pk:
+        messages.success(request, 'Це твоя гра — її можна скачати одразу.')
+        if game.download_file:
+            return redirect('download_game_file', pk=game.pk)
+        return redirect('game_detail', pk=game.pk)
     purchase_price = game.current_price
     if purchase_price is None or purchase_price <= 0:
         GamePurchase.objects.get_or_create(
@@ -279,22 +285,25 @@ def purchased_game(request, pk):
 
 @login_required
 def download_game_file(request, pk):
-    purchase = get_object_or_404(
-        GamePurchase.objects.select_related('game'),
+    game = get_object_or_404(games, pk=pk)
+    is_author = game.author_id == request.user.pk
+    is_buyer = GamePurchase.objects.filter(
         user=request.user,
-        game_id=pk,
+        game=game,
         status=GamePurchase.Status.PAID,
-    )
-    if not purchase.game.download_file:
+    ).exists()
+    if not is_author and not is_buyer:
+        raise Http404
+    if not game.download_file:
         raise Http404
     try:
-        file_handle = purchase.game.download_file.open('rb')
+        file_handle = game.download_file.open('rb')
     except FileNotFoundError as exc:
         raise Http404 from exc
     return FileResponse(
         file_handle,
         as_attachment=True,
-        filename=purchase.game.download_file.name.rsplit('/', 1)[-1],
+        filename=game.download_file.name.rsplit('/', 1)[-1],
     )
 
 
@@ -543,6 +552,10 @@ def manage_site(request):
 @require_POST
 def add_free_game(request, pk):
     game = get_object_or_404(games, pk=pk)
+    if game.author_id == request.user.pk:
+        if game.download_file:
+            return redirect('download_game_file', pk=game.pk)
+        return redirect('game_detail', pk=game.pk)
     if game.current_price is not None and game.current_price > 0:
         messages.error(request, 'Цю гру потрібно придбати через оплату.')
         return redirect('home')
@@ -632,7 +645,7 @@ def game_detail(request, pk):
             user=request.user,
             game=game,
             status=GamePurchase.Status.PAID,
-        ).exists()
+        ).exists() or game.author_id == request.user.pk
     return render(request, 'game_detail.html', {
         'game': game,
         'reviews': game.reviews.select_related('user').all(),

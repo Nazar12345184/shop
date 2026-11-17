@@ -35,6 +35,23 @@ class AuthorAndProfileTests(TestCase):
             author=self.author,
         )
 
+    def test_author_can_download_without_purchase(self):
+        self.game.download_file.save(
+            'author-game.zip',
+            SimpleUploadedFile('author-game.zip', b'author game archive'),
+        )
+        self.client.force_login(self.author)
+
+        catalog = self.client.get(reverse('home'))
+        detail = self.client.get(reverse('game_detail', args=(self.game.pk,)))
+        download = self.client.get(reverse('download_game_file', args=(self.game.pk,)))
+
+        download_url = reverse('download_game_file', args=(self.game.pk,))
+        self.assertContains(catalog, download_url)
+        self.assertContains(detail, download_url)
+        self.assertEqual(download.status_code, 200)
+        self.assertFalse(GamePurchase.objects.filter(user=self.author, game=self.game).exists())
+
     def test_author_list_and_detail_render(self):
         list_response = self.client.get(reverse('author_list'))
         detail_response = self.client.get(reverse('author_detail', args=(self.author.pk,)))
