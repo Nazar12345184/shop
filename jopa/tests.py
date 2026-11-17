@@ -107,6 +107,14 @@ class PurchasedGameViewTests(TestCase):
         self.user = get_user_model().objects.create_user(username='buyer', password='test-password')
         self.game = games.objects.create(name='Test game', description='A short description', price=0)
 
+    def test_library_navigation_opens_authors(self):
+        self.client.force_login(self.user)
+
+        response = self.client.get(reverse('library'))
+
+        self.assertContains(response, reverse('author_list'))
+        self.assertContains(response, '>Автори<', html=False)
+
     def test_free_purchase_redirects_to_purchased_game_page(self):
         self.client.force_login(self.user)
 
