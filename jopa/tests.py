@@ -63,10 +63,15 @@ class AuthorAndProfileTests(TestCase):
         catalog = self.client.get(reverse('home'))
         detail = self.client.get(reverse('game_detail', args=(self.game.pk,)))
         download = self.client.get(reverse('download_game_file', args=(self.game.pk,)))
+        library = self.client.get(reverse('library'))
+        purchased = self.client.get(reverse('purchased_game', args=(self.game.pk,)))
 
         download_url = reverse('download_game_file', args=(self.game.pk,))
         self.assertContains(catalog, download_url)
         self.assertContains(detail, download_url)
+        self.assertContains(library, 'Мої проєкти')
+        self.assertContains(library, download_url)
+        self.assertRedirects(purchased, reverse('game_detail', args=(self.game.pk,)))
         self.assertEqual(download.status_code, 200)
         self.assertFalse(GamePurchase.objects.filter(user=self.author, game=self.game).exists())
 

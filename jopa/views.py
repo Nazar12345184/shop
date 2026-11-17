@@ -265,11 +265,19 @@ def wayforpay_callback(request):
 def library(request):
     purchases = GamePurchase.objects.filter(user=request.user, status=GamePurchase.Status.PAID).select_related('game')
     favorites = Favorite.objects.filter(user=request.user).select_related('game')
-    return render(request, 'library.html', {'purchases': purchases, 'favorites': favorites})
+    authored_games = games.objects.filter(author=request.user).order_by('-pk')
+    return render(request, 'library.html', {
+        'purchases': purchases,
+        'favorites': favorites,
+        'authored_games': authored_games,
+    })
 
 
 @login_required
 def purchased_game(request, pk):
+    game = get_object_or_404(games, pk=pk)
+    if game.author_id == request.user.pk:
+        return redirect('game_detail', pk=game.pk)
     purchases = GamePurchase.objects.filter(user=request.user, game_id=pk).select_related('game')
     order_reference = request.GET.get('order_reference', '')
     if order_reference:
