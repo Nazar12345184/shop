@@ -20,6 +20,24 @@ class HomeViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'index.html')
 
+    def test_header_has_admin_link_only_for_staff(self):
+        regular = get_user_model().objects.create_user(username='regular', password='test-password')
+        admin = get_user_model().objects.create_superuser(
+            username='admin',
+            password='test-password',
+            email='admin@example.com',
+        )
+
+        self.client.force_login(regular)
+        regular_response = self.client.get('/')
+        self.assertContains(regular_response, 'Бібліотека')
+        self.assertContains(regular_response, 'Запропонувати')
+        self.assertNotContains(regular_response, 'Керування')
+
+        self.client.force_login(admin)
+        admin_response = self.client.get('/')
+        self.assertContains(admin_response, 'Керування')
+
 
 class AuthorAndProfileTests(TestCase):
     def setUp(self):
