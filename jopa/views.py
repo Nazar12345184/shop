@@ -340,7 +340,10 @@ def profile(request):
         messages.success(request, 'Профіль збережено.')
         return redirect('profile')
     submissions = GameSubmission.objects.filter(submitter_user=request.user)
-    purchases = GamePurchase.objects.filter(user=request.user).select_related('game')
+    purchases = GamePurchase.objects.filter(
+        user=request.user,
+        status=GamePurchase.Status.PAID,
+    ).select_related('game')
     notifications = SiteNotification.objects.filter(user=request.user)
     published_games = games.objects.filter(author=request.user).order_by('-pk')
     return render(request, 'profile.html', {

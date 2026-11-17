@@ -5,7 +5,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Профіль — {{ request.user.username }}</title>
-<link rel="stylesheet" href="{% static 'css/jopa.css' %}?v=26">
+<link rel="stylesheet" href="{% static 'css/jopa.css' %}?v=27">
 </head>
 <body style="--site-bg:{{ site_config.background_color }};--site-panel:{{ site_config.panel_color }};--site-card:{{ site_config.card_color }};--site-control:{{ site_config.control_color }};--site-header:{{ site_config.header_color }};--site-text:{{ site_config.text_color }};--site-muted:{{ site_config.muted_color }};--site-accent:{{ site_config.accent_color }};--site-border:{{ site_config.border_color }}">
 <header class="esports-topbar">
@@ -19,6 +19,7 @@
     {% if messages %}{% for message in messages %}<div class="notice">{{ message }}</div>{% endfor %}{% endif %}
 
     <section class="profile-hero">
+        <span class="profile-hero-orbit" aria-hidden="true"></span>
         <div class="profile-avatar">{{ request.user.username|first|upper }}</div>
         <div class="profile-identity">
             <p class="side-kicker">ОСОБИСТИЙ КАБІНЕТ</p>
@@ -91,8 +92,12 @@
         <div class="section-heading"><div><p class="side-kicker">ІСТОРІЯ</p><h2>Покупки</h2></div><span class="collection-count">{{ purchases|length }}</span></div>
         <div class="library-items">
             {% for purchase in purchases %}
-            <article class="library-item"><div class="library-game-info"><strong>{{ purchase.game.name }}</strong><span>{{ purchase.created_at|date:"d.m.Y H:i" }} · {{ purchase.get_status_display }}</span></div><strong>{{ purchase.amount|floatformat:2 }} ₴</strong></article>
-            {% empty %}<p class="library-empty">Покупок поки немає.</p>{% endfor %}
+            <article class="library-item purchase-complete">
+                {% if purchase.game.photo %}<img class="library-cover" src="{{ purchase.game.photo.url }}" alt="{{ purchase.game.name }}">{% else %}<span class="library-cover library-cover-placeholder">G</span>{% endif %}
+                <div class="library-game-info"><strong><a class="library-game-link" href="{% url 'game_detail' purchase.game.pk %}">{{ purchase.game.name }}</a></strong><span>Завершено {% if purchase.paid_at %}{{ purchase.paid_at|date:"d.m.Y H:i" }}{% else %}{{ purchase.created_at|date:"d.m.Y H:i" }}{% endif %}</span></div>
+                <span class="status-pill status-approved">Оплачено</span><strong>{{ purchase.amount|floatformat:2 }} ₴</strong>
+            </article>
+            {% empty %}<p class="library-empty">Завершених покупок поки немає.</p>{% endfor %}
         </div>
     </section>
 </main>

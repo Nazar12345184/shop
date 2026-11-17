@@ -45,6 +45,28 @@ class AuthorAndProfileTests(TestCase):
         self.assertEqual(detail_response.status_code, 200)
         self.assertContains(detail_response, 'Author game')
 
+    def test_profile_shows_only_completed_purchases(self):
+        pending = GamePurchase.objects.create(
+            user=self.author,
+            game=self.game,
+            order_reference='pending-profile-order',
+            amount='10.00',
+            status=GamePurchase.Status.PENDING,
+        )
+        paid = GamePurchase.objects.create(
+            user=self.author,
+            game=self.game,
+            order_reference='paid-profile-order',
+            amount='10.00',
+            status=GamePurchase.Status.PAID,
+        )
+        self.client.force_login(self.author)
+
+        response = self.client.get(reverse('profile'))
+
+        self.assertEqual(list(response.context['purchases']), [paid])
+        self.assertNotContains(response, 'pending-profile-order')
+
     def test_profile_updates_user_and_telegram_data(self):
         self.client.force_login(self.author)
 
