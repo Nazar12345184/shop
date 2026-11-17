@@ -75,6 +75,29 @@ class AuthorAndProfileTests(TestCase):
         self.assertEqual(download.status_code, 200)
         self.assertFalse(GamePurchase.objects.filter(user=self.author, game=self.game).exists())
 
+    def test_author_can_download_file_from_approved_submission(self):
+        submission = GameSubmission.objects.create(
+            submitter_name='Author',
+            submitter_telegram='@creator_123',
+            submitter_user=self.author,
+            published_game=self.game,
+            name=self.game.name,
+            description=self.game.description,
+            status=GameSubmission.Status.APPROVED,
+        )
+        submission.download_file.save(
+            'submission-author.zip',
+            SimpleUploadedFile('submission-author.zip', b'submission archive'),
+        )
+        self.client.force_login(self.author)
+
+        library = self.client.get(reverse('library'))
+        download = self.client.get(reverse('download_game_file', args=(self.game.pk,)))
+
+        download_url = reverse('download_game_file', args=(self.game.pk,))
+        self.assertContains(library, download_url)
+        self.assertEqual(download.status_code, 200)
+
     def test_author_list_and_detail_render(self):
         list_response = self.client.get(reverse('author_list'))
         detail_response = self.client.get(reverse('author_detail', args=(self.author.pk,)))

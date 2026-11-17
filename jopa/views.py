@@ -302,16 +302,21 @@ def download_game_file(request, pk):
     ).exists()
     if not is_author and not is_buyer:
         raise Http404
-    if not game.download_file:
+    source_file = game.download_file
+    if not source_file:
+        submission = getattr(game, 'approved_submission', None)
+        if submission:
+            source_file = submission.download_file
+    if not source_file:
         raise Http404
     try:
-        file_handle = game.download_file.open('rb')
+        file_handle = source_file.open('rb')
     except FileNotFoundError as exc:
         raise Http404 from exc
     return FileResponse(
         file_handle,
         as_attachment=True,
-        filename=game.download_file.name.rsplit('/', 1)[-1],
+        filename=source_file.name.rsplit('/', 1)[-1],
     )
 
 

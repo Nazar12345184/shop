@@ -89,7 +89,7 @@
             <article class="library-item">
                 {% if game.photo %}<img class="library-cover" src="{{ game.photo.url }}" alt="{{ game.name }}">{% else %}<span class="library-cover library-cover-placeholder">G</span>{% endif %}
                 <div class="library-game-info"><strong><a class="library-game-link" href="{% url 'game_detail' game.pk %}">{{ game.name }}</a></strong><span>{{ game.get_kind_display }} · {{ game.description|truncatechars:100 }}</span></div>
-                <a class="game-action library-play" href="{% url 'author_detail' request.user.pk %}">Сторінка автора <span>→</span></a>
+                {% if game.download_file or game.approved_submission.download_file %}<a class="game-action library-play" href="{% url 'download_game_file' game.pk %}">Скачати <span>↓</span></a>{% else %}<a class="game-action library-play" href="{% url 'author_detail' request.user.pk %}">Сторінка автора <span>→</span></a>{% endif %}
             </article>
             {% empty %}<p class="library-empty">Опублікованих проєктів поки немає.</p>{% endfor %}
         </div>
